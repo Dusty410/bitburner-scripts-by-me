@@ -1,0 +1,41 @@
+Agriculture:
+0.5\text{ }Water+0.5\text{ }Energy\Rightarrow 1\text{ }Plants+1\text{ }Food
+
+Tobacco:
+1\text{ }Plants+0.2\text{ }Water\Rightarrow Products
+
+Software:
+0.5\text{ }Hardware+0.5\text{ }Energy\Rightarrow 1\text{ }AICores+Products
+
+Food:
+0.5\text{ }Food+0.5\text{ }Water+0.2\text{ }Energy\Rightarrow Products
+
+Chemical:
+1\text{ }Plants+0.5\text{ }Energy+0.5\text{ }Water\Rightarrow 1\text{ }Chemicals
+
+Computer:
+2\text{ }Metal+1\text{ }Energy\Rightarrow 1\text{ }Hardware+Products
+
+Energy:
+0.1\text{ }Hardware+0.2\text{ }Metal\Rightarrow 1\text{ }Energy
+
+Fishing:
+0.5\text{ }Energy\Rightarrow 1\text{ }Food
+
+Healthcare:
+10\text{ }Robots+5\text{ }AICores+5\text{ }Energy+5\text{ }Water\Rightarrow Products
+
+Mining:
+0.8\text{ }Energy\Rightarrow 1\text{ }Metal
+
+Real Estate:
+5\text{ }Metal+5\text{ }Energy+2\text{ }Water+4\text{ }Hardware\Rightarrow 1\text{ }RealEstate+Products
+
+Pharmaceutical:
+2\text{ }Chemicals+1\text{ }Energy+0.5\text{ }Water\Rightarrow 1\text{ }Drugs+Products
+
+Robotics:
+5\text{ }Hardware+3\text{ }Energy\Rightarrow 1\text{ }Robots+Products
+
+Utilities:
+0.1\text{ }Hardware+0.1\text{ }Metal\Rightarrow 1\text{ }Water

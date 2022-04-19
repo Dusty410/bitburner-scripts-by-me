@@ -1,0 +1,21 @@
+|--weaken_hack-------------- --|
+    stagger * 2
+    |--weaken_grow---------- -- -- --|
+        weaken_time - grow + stagger
+        |--grow------------- -- --|
+            weaken_time - hack - stagger
+            |--hack---------|
+            
+            |--weaken_hack-------------- --|
+                stagger * 2
+                |--weaken_grow---------- -- -- --|
+                    weaken_time - grow + stagger
+                    |--grow------------- -- --|
+                        weaken_time - hack - stagger
+                        |--hack---------|
+
+sleeps happen server side, not on home
+stagger is 200ms
+
+|---|.|
+   |---|.|
