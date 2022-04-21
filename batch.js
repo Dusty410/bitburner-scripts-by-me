@@ -1,4 +1,4 @@
-/** @param {NS} ns */
+/** @param {import(".").NS } ns */
 export async function main(ns) {
 	var server = ns.args[0];
 	var target = ns.args[1];
@@ -8,15 +8,15 @@ export async function main(ns) {
 	// figure out free ram on server, with special circumstances for home
 	var free_ram;
 	if (server == 'home') {
-		free_ram = ns.getServerMaxRam(server) - ns.getScriptRam('expand.js') - (ns.getScriptRam('batch.js') * (ns.getPurchasedServers().length + 1)) - 32;
+		free_ram = ns.getServerMaxRam(server) - ns.getScriptRam('hacknet.js') - ns.getScriptRam('expand.js') - (ns.getScriptRam('batch.js') * (ns.getPurchasedServers().length + 1)) - 32;
 	} else {
 		free_ram = ns.getServerMaxRam(server) - ns.getServerUsedRam(server);
 	}
 
 	// initialize money and sec
-	var init_threads = Math.floor(free_ram / ns.getScriptRam('initv2.js'));
+	var init_threads = Math.floor(free_ram / ns.getScriptRam('init.js'));
 	while (ns.getServerSecurityLevel(target) > ns.getServerMinSecurityLevel(target) || ns.getServerMoneyAvailable(target) < ns.getServerMaxMoney(target)) {
-		ns.exec('initv2.js', server, init_threads, target);
+		ns.exec('init.js', server, init_threads, target);
 		await ns.sleep(1000);
 	}
 

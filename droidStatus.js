@@ -1,4 +1,4 @@
-/** @param {NS} ns */
+/** @param {import(".").NS } ns */
 export async function main(ns) {
 	ns.tail();
 	ns.disableLog('ALL');
@@ -7,16 +7,6 @@ export async function main(ns) {
 	var server_list = ns.getPurchasedServers();
 	var pad = 33;
 	var max_ram = 0;
-
-	// // find highest ram
-	// for (let i in server_list) {
-	// 	var current = server_list[i];
-	// 	var current_ram = ns.getServerMaxRam(current);
-	// 	if (current_ram > max_owned_ram) {
-	// 		max_owned_ram = current_ram;
-	// 		max_ram_droid = current;
-	// 	}
-	// }
 
 	server_list.sort(function (a, b) { return a - b });
 	for (let i in server_list) {

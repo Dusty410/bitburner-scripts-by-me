@@ -1,10 +1,12 @@
-/** @param {NS} ns */
+/** @param {import(".").NS } ns */
 export async function main(ns) {
 	// ns.tail();
-	ns.disableLog('ALL');
-	ns.clearLog();
+	// ns.disableLog('ALL');
+	// ns.clearLog();
 
-	ns.tprint("Copying scripts...");
+	ns.tprint(
+		"Copying scripts..."
+	);
 
 	var servers_list = ns.read('/text/server_list.txt').split(',');
 	servers_list = servers_list.concat(ns.getPurchasedServers());
@@ -16,7 +18,7 @@ export async function main(ns) {
 				await ns.scp("hackv2.js", server) &&
 				await ns.scp("grow.js", server) &&
 				await ns.scp("weaken.js", server) &&
-				await ns.scp("initv2.js", server) &&
+				await ns.scp("init.js", server) &&
 				await ns.scp("share.js", server) &&
 				await ns.scp("hack.js", server)
 			) {
@@ -25,5 +27,7 @@ export async function main(ns) {
 			}
 		}
 	}
-	ns.print("Successfully copied scripts to " + copy_count + " servers.");
+	ns.tprint(
+		"Successfully copied scripts to " + copy_count + " servers."
+	);
 }

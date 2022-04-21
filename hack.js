@@ -1,7 +1,7 @@
-/** @param {NS} ns */
+/** @param {import(".").NS } ns */
 export async function main(ns) {
 	var target_list = ns.args[0].split(',');
-	var hack_chance_limit = 0.75;
+	var hack_chance_limit = 0;
 	var sec_limit_factor = 1;
 	var money_limit_factor = 1;
 	while (true) {

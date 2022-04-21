@@ -1,4 +1,4 @@
-/** @param {NS} ns */
+/** @param {import(".").NS } ns */
 export async function main(ns) {
 	// // ns.tail();
 	// var servers_list = ns.read('/text/server_list.txt').split(',');
@@ -31,6 +31,7 @@ export async function main(ns) {
 
 	ns.run('killswitch.js');
 	await ns.sleep(1000);
+	
 	var server_list = ns.read('/text/server_list.txt').split(',');
 	server_list.push('home');
 	var target_list = ns.read('/text/new_target_list.txt').split(',');

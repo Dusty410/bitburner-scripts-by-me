@@ -1,4 +1,4 @@
-/** @param {NS} ns */
+/** @param {import(".").NS } ns */
 export async function main(ns) {
 	var server = ns.args[0];
 	ns.killall(server)

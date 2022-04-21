@@ -1,4 +1,4 @@
-/** @param {NS} ns */
+/** @param {import(".").NS } ns */
 export async function main(ns) {
 
 	const data = ns.flags([['tail', false]]);
@@ -60,7 +60,7 @@ export async function main(ns) {
 					}
 				}
 
-				if (ns.hasRootAccess(current) && !droid_list.includes(current) && !'darkweb'.includes(current)) {
+				if (ns.hasRootAccess(current) && !droid_list.includes(current) && !current.includes('darkweb')) {
 					// if (ns.getServerMaxMoney(current) > 0) {
 					var current_money = Math.floor(ns.getServerMoneyAvailable(current));
 					var current_money_formatted = "$" + Intl.NumberFormat('en-US').format(current_money);
@@ -131,11 +131,23 @@ export async function main(ns) {
 		}
 	}
 
+	var hacknet_nodes_list = [];
+	for (let i in big_list) {
+		var current = big_list[i];
+		if (current.includes('hacknet')) {
+			hacknet_nodes_list.push(current);
+		}
+	}
+
 	ns.print('\nCrawl timestamp: ' + ns.args[0]);
 
 	await ns.write('/text/all_servers.txt', big_list, 'w');
 	await ns.write('/text/server_list.txt', server_list, 'w');
 	await ns.write('/text/target_list.txt', target_list, 'w');
+	await ns.write('/text/hacknet_nodes_list.txt', hacknet_nodes_list, 'w');
+
+	ns.run('refineTargets.js');
+	ns.run('copyScript.js');
 
 	ns.tprint("Target count: " + target_list.length);
 	ns.tprint("Server count: " + server_list.length);
