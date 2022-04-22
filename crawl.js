@@ -57,21 +57,24 @@ export async function main(ns) {
 							ns.sqlinject(current);
 						}
 						ns.nuke(current);
+						// ns.singularity.connect(current);
+						// ns.singularity.installBackdoor();
 					}
 				}
 
 				if (ns.hasRootAccess(current) && !droid_list.includes(current) && !current.includes('darkweb')) {
 					// if (ns.getServerMaxMoney(current) > 0) {
-					var current_money = Math.floor(ns.getServerMoneyAvailable(current));
-					var current_money_formatted = "$" + Intl.NumberFormat('en-US').format(current_money);
-					var max_money = Math.floor(ns.getServerMaxMoney(current));
-					var max_money_format = "$" + Intl.NumberFormat('en-US').format(max_money);
-					var pad = 16;
-					var max_ram = ns.getServerMaxRam(current);
-					var current_sec = ns.getServerSecurityLevel(current);
-					var min_sec = ns.getServerMinSecurityLevel(current);
-					var hack_chance = ns.hackAnalyzeChance(current) * 100;
+					// var current_money = Math.floor(ns.getServerMoneyAvailable(current));
+					// var current_money_formatted = "$" + Intl.NumberFormat('en-US').format(current_money);
+					// var max_money = Math.floor(ns.getServerMaxMoney(current));
+					// var max_money_format = "$" + Intl.NumberFormat('en-US').format(max_money);
+					// var pad = 16;
+					// var max_ram = ns.getServerMaxRam(current);
+					// var current_sec = ns.getServerSecurityLevel(current);
+					// var min_sec = ns.getServerMinSecurityLevel(current);
+					// var hack_chance = ns.hackAnalyzeChance(current) * 100;
 
+					// only include in printed crawl if not hacknet node
 					var server_string = ' '.repeat(depth) + '╚-' + current;
 					// ns.tprint("current: ".padStart(pad, ' ') + current_money_formatted.padStart(pad, ' ') + ' (' + Math.floor((current_money/max_money)*100) + '%)');
 					// ns.tprint("max: ".padStart(pad, ' ') + max_money_format.padStart(pad, ' '));
@@ -84,7 +87,7 @@ export async function main(ns) {
 					for (let i in file_list) {
 						var current_file = file_list[i];
 						if (current_file.includes('.cct')) {
-							server_string += '\uD83D\uDFE6';
+							server_string += '\uD83D\uDFE6'; // blue square
 						}
 					}
 
@@ -92,15 +95,15 @@ export async function main(ns) {
 						if (ns.getPlayer().hacking < ns.getServerRequiredHackingLevel(current)) {
 							server_string += '\uD83D\uDFE5'; // red square
 						} else if (!ns.getServer(current).backdoorInstalled) {
-							server_string += '\uD83D\uDFE8';
+							server_string += '\uD83D\uDFE8'; // yellow square
 						} else {
-							server_string += '\uD83D\uDFE9';
+							server_string += '\uD83D\uDFE9'; // green square
 						}
-
 					}
-					// ns.print('\n');
-					// }
-					ns.print(server_string);
+
+					if (!current.includes('hacknet')) {
+						ns.print(server_string);
+					}
 					server_list.push(current);
 					serverMap(ns.scan(current), depth + 1, server_list);
 				}

@@ -3,14 +3,22 @@ export async function main(ns) {
 	ns.run('killswitch.js');
 	await ns.sleep(1000);
 
-	ns.tprint("Deploying hacking scripts...");
+	ns.tprint("Running batch scripts...");
 
-	var servers_list = ns.getPurchasedServers();
-	// var hacknet_list = ns.read('/text/hacknet_nodes_list.txt').split(',');
-	// var servers_list = droid_list.concat(hacknet_list);
-	// var server_list = ns.read('/text/server_list.txt').split(',');
+	var droids_list = ns.getPurchasedServers();
+	var hacknet_list = ns.read('/text/hacknet_nodes_list.txt').split(',');
+	var servers_list = [];
+	if (droids_list.length > 0 && hacknet_list.length == 0) {
+		servers_list = droids_list;
+	}
+	if (droids_list.length == 0 && hacknet_list.length > 0) {
+		servers_list = hacknet_list;
+	}
+	if (droids_list.length > 0 && hacknet_list.length > 0) {
+		servers_list = droid_list.concat(hacknet_list);
+	}
 	servers_list.push('home');
-	// var target_list = ns.read('/text/target_list.txt').split(',');
+
 	var target_list = ns.read('/text/new_target_list.txt').split(',');
 	var iter_list;
 	// adding one to account for home
