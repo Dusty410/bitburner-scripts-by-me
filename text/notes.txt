@@ -1,2 +1,0 @@
-for batch collision
-monitor hack level, when change detected, re-calc everything

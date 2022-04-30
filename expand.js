@@ -109,7 +109,7 @@ export async function main(ns) {
 		}
 	}
 
-	var min_level = 6;
+	var min_level = 7;
 	await GrowServers(min_level);
 }
 

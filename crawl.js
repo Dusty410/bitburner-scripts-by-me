@@ -9,8 +9,8 @@ export async function main(ns) {
 	ns.disableLog('ALL');
 	ns.clearLog();
 
-	function serverMap(scan_list, depth, server_list) {
-		var current;
+	// map all servers, except hacknet servers, purchased (droids), and darkweb
+	async function serverMap(scan_list, depth, server_list) {
 		var droid_list = ns.getPurchasedServers();
 
 		// removes parent from array, but only if not level 1
@@ -18,7 +18,7 @@ export async function main(ns) {
 			scan_list.shift();
 		}
 
-		// get port open capability
+		// get port opening capability
 		var port = 0;
 		if (ns.fileExists('BruteSSH.exe')) {
 			port++;
@@ -38,50 +38,42 @@ export async function main(ns) {
 
 		if (scan_list.length > 0) {
 			for (let i in scan_list) {
-				current = scan_list[i];
-				if (!(ns.hasRootAccess(current))) {
-					if (ns.getHackingLevel() >= ns.getServerRequiredHackingLevel(current) && ns.getServerNumPortsRequired(current) <= port) {
-						if (ns.fileExists('BruteSSH.exe')) {
-							ns.brutessh(current);
-						}
-						if (ns.fileExists('FTPCrack.exe')) {
-							ns.ftpcrack(current);
-						}
-						if (ns.fileExists('relaySMTP.exe')) {
-							ns.relaysmtp(current);
-						}
-						if (ns.fileExists('HTTPWorm.exe')) {
-							ns.httpworm(current);
-						}
-						if (ns.fileExists('SQLInject.exe')) {
-							ns.sqlinject(current);
-						}
-						ns.nuke(current);
-						// ns.singularity.connect(current);
-						// ns.singularity.installBackdoor();
+				var current = scan_list[i];
+				// nuking only requires enough ports to be opened
+				if (ns.getServerNumPortsRequired(current) <= port &&
+					!ns.hasRootAccess(current)
+				) {
+					if (ns.fileExists('BruteSSH.exe')) {
+						ns.brutessh(current);
 					}
+					if (ns.fileExists('FTPCrack.exe')) {
+						ns.ftpcrack(current);
+					}
+					if (ns.fileExists('relaySMTP.exe')) {
+						ns.relaysmtp(current);
+					}
+					if (ns.fileExists('HTTPWorm.exe')) {
+						ns.httpworm(current);
+					}
+					if (ns.fileExists('SQLInject.exe')) {
+						ns.sqlinject(current);
+					}
+					ns.nuke(current);
 				}
 
-				if (ns.hasRootAccess(current) && !droid_list.includes(current) && !current.includes('darkweb')) {
-					// if (ns.getServerMaxMoney(current) > 0) {
-					// var current_money = Math.floor(ns.getServerMoneyAvailable(current));
-					// var current_money_formatted = "$" + Intl.NumberFormat('en-US').format(current_money);
-					// var max_money = Math.floor(ns.getServerMaxMoney(current));
-					// var max_money_format = "$" + Intl.NumberFormat('en-US').format(max_money);
-					// var pad = 16;
-					// var max_ram = ns.getServerMaxRam(current);
-					// var current_sec = ns.getServerSecurityLevel(current);
-					// var min_sec = ns.getServerMinSecurityLevel(current);
-					// var hack_chance = ns.hackAnalyzeChance(current) * 100;
+				// 
+				// if (ns.getHackingLevel() >= ns.getServerRequiredHackingLevel(current) &&
+				// 	!ns.getServer(current).backdoorInstalled) {
+				// 	ns.singularity.connect(current);
+				// 	await ns.singularity.installBackdoor();
+				// }
 
+				if (ns.hasRootAccess(current) &&
+					!droid_list.includes(current) &&
+					!current.includes('darkweb') &&
+					!current.includes('hacknet')) {
 					// only include in printed crawl if not hacknet node
 					var server_string = ' '.repeat(depth) + '╚-' + current;
-					// ns.tprint("current: ".padStart(pad, ' ') + current_money_formatted.padStart(pad, ' ') + ' (' + Math.floor((current_money/max_money)*100) + '%)');
-					// ns.tprint("max: ".padStart(pad, ' ') + max_money_format.padStart(pad, ' '));
-					// ns.tprint("current sec: ".padStart(pad, ' ') + current_sec);
-					// ns.tprint("min sec: ".padStart(pad, ' ') + min_sec);
-					// ns.tprint("hack threads: ".padStart(pad, ' ') + threads);
-					// ns.tprint("hack: ".padStart(pad, ' ') + Math.floor(hack_chance) + '%');
 
 					var file_list = ns.ls(current);
 					for (let i in file_list) {
@@ -101,11 +93,10 @@ export async function main(ns) {
 						}
 					}
 
-					if (!current.includes('hacknet')) {
-						ns.print(server_string);
-					}
+					ns.print(server_string);
 					server_list.push(current);
-					serverMap(ns.scan(current), depth + 1, server_list);
+
+					await serverMap(ns.scan(current), depth + 1, server_list);
 				}
 			}
 		}
@@ -115,43 +106,56 @@ export async function main(ns) {
 	ns.tprint("Getting server list...");
 
 	var big_list = [];
-	var big_list = serverMap(ns.scan('home'), 1, big_list);
+	var big_list = await serverMap(ns.scan('home'), 1, big_list);
 
 	var target_list = [];
 	for (let i in big_list) {
-		// only build target list with servers with non 0 money
-		if (!(ns.getServerMoneyAvailable(big_list[i]) == 0)) {
-			target_list.push(big_list[i]);
+		// only build target list with servers that are hackable with money > $0
+		var current = big_list[i];
+		if (ns.getServerMoneyAvailable(current) > 0 && ns.getHackingLevel() >= ns.getServerRequiredHackingLevel(current)) {
+			target_list.push(current);
 		}
 	}
 
 	var server_list = [];
 	var desired_threads = 1;
 	for (let i in big_list) {
-		// only run script from servers with sufficient RAM
-		if (ns.getServerMaxRam(big_list[i]) > (ns.getScriptRam('hack.js') * desired_threads)) {
-			server_list.push(big_list[i]);
-		}
-	}
-
-	var hacknet_nodes_list = [];
-	for (let i in big_list) {
+		// only run script from servers with sufficient RAM and with root access
 		var current = big_list[i];
-		if (current.includes('hacknet')) {
-			hacknet_nodes_list.push(current);
+		if (ns.getHackingLevel() >= ns.getServerRequiredHackingLevel(current) &&
+			ns.getServerMaxRam(current) > (ns.getScriptRam('hack.js') * desired_threads)) {
+			server_list.push(current);
 		}
 	}
 
-	ns.print('\nCrawl timestamp: ' + ns.args[0]);
+	var hacknet_server_list = [];
+	var home_scan = ns.scan('home');
+	for (let i in home_scan) {
+		var current = home_scan[i];
+		if (current.includes('hacknet')) {
+			hacknet_server_list.push(current);
+		}
+	}
+
+	if (ns.args.length == 0) {
+		var current_time = new Date();
+		current_time.getDate();
+		current_time.getTime();
+		ns.print('\nCrawl timestamp: ' + current_time.toLocaleString('en-US').toString());
+	} else {
+		ns.print('\nCrawl timestamp: ' + ns.args[0]);
+	}
 
 	await ns.write('/text/all_servers.txt', big_list, 'w');
 	await ns.write('/text/server_list.txt', server_list, 'w');
 	await ns.write('/text/target_list.txt', target_list, 'w');
-	await ns.write('/text/hacknet_nodes_list.txt', hacknet_nodes_list, 'w');
+	await ns.write('/text/hacknet_nodes_list.txt', hacknet_server_list, 'w');
 
 	ns.run('refineTargets.js');
 	ns.run('copyScript.js');
 
 	ns.tprint("Target count: " + target_list.length);
 	ns.tprint("Server count: " + server_list.length);
+	ns.tprint("Droid count: " + ns.getPurchasedServers().length);
+	ns.tprint("Hacknet Server count: " + hacknet_server_list.length);
 }

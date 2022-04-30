@@ -2,22 +2,57 @@
 export async function main(ns) {
 	var server = ns.args[0];
 	var target = ns.args[1];
-	// var server = 'droid-3';
-	// var target = 'n00dles';
 
 	// figure out free ram on server, with special circumstances for home
 	var free_ram;
 	if (server == 'home') {
-		free_ram = ns.getServerMaxRam(server) - ns.getScriptRam('hacknet.js') - ns.getScriptRam('expand.js') - (ns.getScriptRam('batch.js') * (ns.getPurchasedServers().length + 1)) - 32;
+		free_ram = ns.getServerMaxRam(server) - ns.getScriptRam('hacknet.js') - ns.getScriptRam('expand.js') -
+			(ns.getScriptRam('batch.js') * (ns.getPurchasedServers().length + 1)) - 32;
 	} else {
 		free_ram = ns.getServerMaxRam(server) - ns.getServerUsedRam(server);
 	}
 
+	/**
+	* grow
+	* time: hack skill, sec level
+	* grow amount: threads
+	* sec incr amount: 0.004 * threads
+	*
+	* weaken
+	* time: hack skill, sec level
+	* sec decr amount: 0.05 * threads
+	*/
+
+	// weaken to min security
+	// if (ns.getServerSecurityLevel(target) > ns.getServerMinSecurityLevel(target)) {
+	// 	var init_weaken_to_min = Math.ceil((ns.getServerSecurityLevel(target) - ns.getServerMinSecurityLevel(target)) / 0.05);
+	// 	var init_weaken_ram_allow = Math.floor(free_ram / ns.getScriptRam('weaken.js'));
+	// 	var num_weaken_rounds = Math.ceil(init_weaken_to_min / init_weaken_ram_allow);
+
+	// 	for (let index = 0; index < num_weaken_rounds; index++) {
+	// 		ns.exec('weaken.js', server, init_weaken_ram_allow, target, 0, Math.random());
+	// 		await ns.sleep(ns.getWeakenTime(target) + 200);
+	// 	}
+	// }
+
+	// // grow money while reverting sec incr from grows
+	// while (ns.getServerMoneyAvailable(target) < ns.getServerMaxMoney(target)) {
+	// 	var init_grow_factor = ns.getServerMaxMoney(target) / ns.getServerMoneyAvailable(target);
+	// 	var init_grow_threads = Math.ceil(ns.growthAnalyze(target, init_grow_factor));
+	// 	var init_grow_threads_ram = Math.floor(ns.getServerMaxRam(server) / ns.getScriptRam('weaken.js'));
+	// 	// insert ternary assignment here
+	// }
+
 	// initialize money and sec
 	var init_threads = Math.floor(free_ram / ns.getScriptRam('init.js'));
-	while (ns.getServerSecurityLevel(target) > ns.getServerMinSecurityLevel(target) || ns.getServerMoneyAvailable(target) < ns.getServerMaxMoney(target)) {
+	if (ns.getServerSecurityLevel(target) > ns.getServerMinSecurityLevel(target) ||
+		ns.getServerMoneyAvailable(target) < ns.getServerMaxMoney(target)) {
 		ns.exec('init.js', server, init_threads, target);
-		await ns.sleep(1000);
+	}
+
+	while (ns.getServerSecurityLevel(target) > ns.getServerMinSecurityLevel(target) ||
+		ns.getServerMoneyAvailable(target) < ns.getServerMaxMoney(target)) {
+		await ns.sleep(25);
 	}
 
 	// determine highest steal factor, given a server's available RAM
@@ -104,6 +139,7 @@ export async function main(ns) {
 				var weaken_time = Math.ceil(ns.getWeakenTime(target));
 
 				// stats, to debug
+				/**
 				ns.print(
 					"\n\nhack threads needed to hack $" + Intl.NumberFormat('en-US').format(target_money) + " (" +
 					(steal_factor * 100) + ")% from " + target + ": " + hack_threads + " (RAM: " + hack_ram + " GiB)" +
@@ -123,6 +159,7 @@ export async function main(ns) {
 					"\nthis batch could be run " + num_batches_time + " times based on time" +
 					"\nit should be run " + num_batches
 				);
+				*/
 
 				// 1st weaken, counter hack, finishes 2nd
 				ns.exec('weaken.js', server, weaken_hack_threads, target, 0, Math.random());
@@ -146,17 +183,17 @@ export async function main(ns) {
 /**
  * hack
  * time: hack skill, sec level
- * amount: threads
- * sec incr: 0.002 * threads
+ * hack amount: threads
+ * sec incr amount: 0.002 * threads
  *
  * grow
- * time:hack skill, sec level
- * amount: threads
- * sec incr: 0.004 * threads
+ * time: hack skill, sec level
+ * grow amount: threads
+ * sec incr amount: 0.004 * threads
  *
  * weaken
  * time: hack skill, sec level
- * sec decr: 0.05 * threads
+ * sec decr amount: 0.05 * threads
  *
  * start order, from longest time to shortest:
  * weaken -> weaken -> grow -> hack

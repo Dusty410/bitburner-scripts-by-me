@@ -10,6 +10,7 @@ export async function main(ns) {
 	if (hacknet_list[0] == "") {
 		hacknet_list = [];
 	}
+	
 	var servers_list;
 	if (droids_list.length > 0 && hacknet_list.length == 0) {
 		servers_list = droids_list;
@@ -22,7 +23,8 @@ export async function main(ns) {
 	}
 	if (droids_list. length == 0 && hacknet_list.length == 0) {
 		servers_list = ['home'];
-	} else {
+	}
+	if (droids_list. length > 0 || hacknet_list.length > 0) {
 		servers_list.push('home');
 	}
 
