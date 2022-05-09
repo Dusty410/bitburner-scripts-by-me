@@ -70,7 +70,18 @@ export async function main(ns) {
         let depthString = '';
         for (let i in serverList) {
             let current = serverList[i];
-            let serverString = '╞' + current.name;
+            let serverString = '';
+
+            if (current.depth > 0) {
+                if (hasYoungerSibling(serverList, current.name)) {
+                    serverString += '╞';
+                } else {
+                    serverString += '╘';
+                }
+            }
+
+            serverString += current.name;
+            
 
             // post a square based on backdoor status of one of the story significant servers
             if (['CSEC', 'avmnite-02h', 'I.I.I.I', 'run4theh111z', 'The-Cave'].includes(current.name)) {
