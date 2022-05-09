@@ -10,10 +10,25 @@ export async function main(ns) {
 		return ns.corporation.getCorporation().funds;
 	}
 
+	function divExists(divName) {
+		var exists = false;
+		var divisions = ns.corporation.getCorporation().divisions;
+		for (let i in divisions) {
+			var division = divisions[i];
+			if (division.name == divName) {
+				exists = true;
+			}
+		}
+		return exists;
+	}
+
 	function expandToAllCities(division) {
 		for (let i in cities) {
 			var city = cities[i];
-			ns.corporation.expandCity(division, city);
+			if (!ns.corporation.getDivision(division).cities.includes(city)) {
+				ns.corporation.expandCity(division, city);
+				ns.corporation.purchaseWarehouse(division, city);
+			}
 		}
 	}
 
@@ -93,7 +108,7 @@ export async function main(ns) {
 		}
 	}
 
-	function oneTimeBuy(division, shoppingList) {
+	async function oneTimeBuy(division, shoppingList) {
 		for (let i in cities) {
 			var city = cities[i];
 			for (let j in shoppingList) {
@@ -115,7 +130,8 @@ export async function main(ns) {
 	 * so expansion is how you make your first Agriculture division!
 	 */
 	ns.corporation.createCorporation(corpName);
-	if (funds() >= ns.corporation.getExpandIndustryCost('Agriculture')) {
+	
+	if (funds() >= ns.corporation.getExpandIndustryCost('Agriculture') && !divExists(agroDiv)) {
 		ns.corporation.expandIndustry('Agriculture', agroDiv);
 	}
 
@@ -194,7 +210,7 @@ export async function main(ns) {
 	 */
 	ns.corporation.unlockUpgrade('Warehouse API');
 	var shoppingList = [['Hardware', 12.5], ['AI Cores', 7.5], ['Real Estate', 2700]];
-	oneTimeBuy(agroDiv, shoppingList);
+	await oneTimeBuy(agroDiv, shoppingList);
 
 	/**
 	 * When they start, employee Morale, Happiness, and Energy will be fair-to-middlin’, but they’ll
@@ -255,7 +271,7 @@ export async function main(ns) {
 	 * spoiler alert: we can, and this time it should be about $5t. Nice.
 	 */
 	shoppingList = [['Hardware', 267.5], ['Robots', 9.6], ['AI Cores', 244.5], ['Real Estate', 11940]];
-	oneTimeBuy(agroDiv, shoppingList);
+	await oneTimeBuy(agroDiv, shoppingList);
 	ns.corporation.acceptInvestmentOffer();
 
 	/**
@@ -274,7 +290,7 @@ export async function main(ns) {
 	 */
 	expandStorageAllCities(agroDiv, 9);
 	shoppingList = [['Hardware', 650], ['Robots', 63], ['AI Cores', 375], ['Real Estate', 8400]];
-	oneTimeBuy(agroDiv, shoppingList);
+	await oneTimeBuy(agroDiv, shoppingList);
 
 	/**
 	 * The First Product and Beyond
@@ -339,11 +355,11 @@ export async function main(ns) {
 	}
 
 	while (ns.corporation.getProduct(tobacDiv, prod).developmentProgress < 100) {
-		if (ns.corporation.getCorporation().funds > 3e12) {
+		if (funds() > 3e12) {
 			ns.corporation.levelUpgrade('Wilson Analytics');
 		}
 
-		if (ns.corporation.getCorporation().funds > ns.corporation.getHireAdVertCost(tobacDiv)) {
+		if (funds() > ns.corporation.getHireAdVertCost(tobacDiv)) {
 			ns.corporation.hireAdVert(tobacDiv);
 		}
 	}
@@ -382,16 +398,19 @@ export async function main(ns) {
 	 * staff them. It’s not nothing, but better products will sell better on their own
 	 * so it’s more of a “sprinkles on the sundae” situation.
 	 */
-	var employees = 30;
-	ns.corporation.upgradeOfficeSize(tobacDiv, 'Aevum', employees);
-	for (let index = 0; index < employees; index++) {
+	var employeesToHire = 30;
+	var numJobs = Object.keys(jobs).length;
+	var jobsPerPosition = employeesToHire / numJobs;
+	ns.corporation.upgradeOfficeSize(tobacDiv, 'Aevum', employeesToHire);
+	for (let index = 0; index < employeesToHire; index++) {
 		ns.corporation.hireEmployee(tobacDiv, 'Aevum');
 	}
-	ns.corporation.setAutoJobAssignment(tobacDiv, 'Aevum', jobs.ops, employees / 5);
-	ns.corporation.setAutoJobAssignment(tobacDiv, 'Aevum', jobs.eng, employees / 5);
-	ns.corporation.setAutoJobAssignment(tobacDiv, 'Aevum', jobs.bus, employees / 5);
-	ns.corporation.setAutoJobAssignment(tobacDiv, 'Aevum', jobs.mgmt, employees / 5);
-	ns.corporation.setAutoJobAssignment(tobacDiv, 'Aevum', jobs.rd, employees / 5);
+
+	ns.corporation.setAutoJobAssignment(tobacDiv, 'Aevum', jobs.ops, jobsPerPosition);
+	ns.corporation.setAutoJobAssignment(tobacDiv, 'Aevum', jobs.eng, jobsPerPosition);
+	ns.corporation.setAutoJobAssignment(tobacDiv, 'Aevum', jobs.bus, jobsPerPosition);
+	ns.corporation.setAutoJobAssignment(tobacDiv, 'Aevum', jobs.mgmt, jobsPerPosition);
+	ns.corporation.setAutoJobAssignment(tobacDiv, 'Aevum', jobs.rd, jobsPerPosition);
 
 	/**
 	 * When the hiring in Aevum is done and the corp has 3 products, Discontinue the
@@ -407,5 +426,8 @@ export async function main(ns) {
 	 * when setting prices on new products (still MAX and MP), it’s only necessary
 	 * to turn on Market-TA.II (to the right, inside MARKET-TA).
 	 */
-	var products = ns.corporation.getDivision().products;
+	// var products = ns.corporation.getDivision().products;
+	// while (products.length < 3) {
+	// 	await ns.sleep(25);
+	// }
 }

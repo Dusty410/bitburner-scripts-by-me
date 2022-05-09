@@ -5,10 +5,34 @@ export async function main(ns) {
 	ns.clearLog();
 
 	var server_list = ns.getPurchasedServers();
-	var pad = 33;
 	var max_ram = 0;
 
-	server_list.sort(function (a, b) { return a - b });
+	var nameColumn = "Name";
+	var tierColumn = "Tier";
+	var RAMColumn = "RAM GiB";
+
+	var nameColumnPad = 7;
+	var tierColumnPad = 4;
+	var RAMColumnPad = 9;
+
+	ns.print(
+		"┌".padEnd(nameColumnPad + 1, '─') +
+		"┬".padEnd(tierColumnPad + 1, '─') +
+		"┬".padEnd(RAMColumnPad + 1, '─') + "┐"
+	)
+
+	ns.print(
+		"│" + nameColumn.padEnd(nameColumnPad, ' ') +
+		"│" + tierColumn.padEnd(tierColumnPad, ' ') +
+		"│" + RAMColumn.padEnd(RAMColumnPad, ' ') + "│"
+	);
+
+	ns.print(
+		"├".padEnd(nameColumnPad + 1, '─') +
+		"┼".padEnd(tierColumnPad + 1, '─') +
+		"┼".padEnd(RAMColumnPad + 1, '─') + "┤"
+	);
+
 	for (let i in server_list) {
 		var current = server_list[i];
 		var current_ram = ns.getServerMaxRam(current);
@@ -16,11 +40,15 @@ export async function main(ns) {
 			max_ram = current_ram;
 		}
 		ns.print(
-			(current + ", level " + Math.log2(ns.getServerMaxRam(current)) + ", RAM: " + ns.getServerMaxRam(current)).padStart(pad, ' ')
+			"│" + current.padStart(nameColumnPad, ' ') + 
+			"│" + Math.log2(ns.getServerMaxRam(current)).toString().padStart(tierColumnPad, ' ') +
+			"│" + Intl.NumberFormat('en-US').format(ns.getServerMaxRam(current)).padStart(RAMColumnPad, ' ') + "│"
 		);
 	}
+
 	ns.print(
-		"INFO\n" + "Droid count: ".padStart(pad, " ") + server_list.length + "\n" + "Max possible droids: ".padStart(pad, " ") +
-		ns.getPurchasedServerLimit() + "\n" + "Highest level: ".padStart(pad, " ") + Math.log2(max_ram)
+		"└".padEnd(nameColumnPad + 1, '─') +
+		"┴".padEnd(tierColumnPad + 1, '─') +
+		"┴".padEnd(RAMColumnPad + 1, '─') + "┘"
 	);
 }

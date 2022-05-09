@@ -4,7 +4,12 @@ export async function main(ns) {
 	async function BuyServer(droid_level) {
 		if (ns.getPurchasedServerCost(2 ** droid_level) < ns.getServerMoneyAvailable('home')) {
 			// buy it
-			var server_name = ns.purchaseServer("droid", (2 ** droid_level));
+			var droids = ns.getPurchasedServers();
+			var droidNum = 0;
+			while (droids.includes('droid' + droidNum)) {
+				droidNum++;
+			}
+			var server_name = ns.purchaseServer('droid' + droidNum, (2 ** droid_level));
 			ns.print("Bought " + server_name + ", RAM " + ns.getServerMaxRam(server_name) + ", level " + droid_level);
 			// deploy it
 			ns.run('killswitch.js');
@@ -47,7 +52,9 @@ export async function main(ns) {
 			}
 
 			// if i have room, buy as many as i can afford
-			while (droid_list.length < droid_limit && await BuyServer(droid_level)) {
+			let boughtServer = true;
+			while (droid_list.length < droid_limit && boughtServer	) {
+				boughtServer = await BuyServer(droid_level);
 			}
 			
 			// if droids are at capacity, determine if i can upgrade 1

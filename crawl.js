@@ -68,6 +68,8 @@ export async function main(ns) {
 				// 	await ns.singularity.installBackdoor();
 				// }
 
+				
+
 				if (ns.hasRootAccess(current) &&
 					!droid_list.includes(current) &&
 					!current.includes('darkweb') &&

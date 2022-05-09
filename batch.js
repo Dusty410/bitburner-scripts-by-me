@@ -1,5 +1,7 @@
 /** @param {import(".").NS } ns */
 export async function main(ns) {
+	// ns.tail();
+
 	var server = ns.args[0];
 	var target = ns.args[1];
 
@@ -57,7 +59,7 @@ export async function main(ns) {
 
 	// determine highest steal factor, given a server's available RAM
 	var break_flag = false; // set flag to prevent total_ram overrun
-	for (let i = 0; i < 100; i++) {
+	for (let i = 1; i < 100; i++) {
 		var server_max_money = ns.getServerMaxMoney(target);
 		var steal_factor = i / 100; // divide by 100 to get steal factor
 		var target_money = server_max_money * steal_factor;
