@@ -70,8 +70,9 @@ export async function main(ns) {
         let depthString = '';
         for (let i in serverList) {
             let current = serverList[i];
-            let serverString = '╘═' + current.name;
+            let serverString = '╞' + current.name;
 
+            // post a square based on backdoor status of one of the story significant servers
             if (['CSEC', 'avmnite-02h', 'I.I.I.I', 'run4theh111z', 'The-Cave'].includes(current.name)) {
                 if (ns.getPlayer().hacking < ns.getServerRequiredHackingLevel(current.name)) {
                     serverString += '\uD83D\uDFE5'; // red square, can't backdoor
@@ -82,6 +83,7 @@ export async function main(ns) {
                 }
             }
 
+            // post a blue square if a contract is present on the server
             let fileList = ns.ls(current.name);
             for (let i in fileList) {
                 let currentFile = fileList[i];
@@ -90,16 +92,22 @@ export async function main(ns) {
                 }
             }
 
-            // ns.print(' '.repeat(current.depth) + serverString);
+            // if we've jumped up in depth, change string to match
+            if (current.depth < depthString.length) {
+                depthString = depthString.slice(0, -(depthString.length - current.depth));
+            }
+
             ns.print(depthString + serverString);
 
-            // only check for siblings if high enough depth, ie not on home
+            // only check for siblings if deep enough, ie not on home
             if (current.depth > 0) {
-                if (hasYoungerSibling(serverList, current.name)) {
+                if (hasYoungerSibling(serverList, current.name) && current.children != null) {
                     depthString += '│';
                 } else {
                     depthString += ' ';
                 }
+            } else {
+                depthString += ' ';
             }
         }
     }
