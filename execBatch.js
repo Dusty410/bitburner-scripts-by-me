@@ -39,6 +39,6 @@ export async function main(ns) {
     for (let i in iterList) {
         var server = serversList[i];
         var target = targetList[i];
-        ns.run('batch.js', 1, server, target, Math.random());
+        ns.run('batchv2.js', 1, server, target, Math.random());
     }
 }

@@ -1,7 +1,7 @@
 /** @param {import(".").NS } ns */
 export async function main(ns) {
 
-    const hackFiles = ['hackv2.js', 'grow.js', 'weaken.js', 'init.js', 'share.js', 'hack.js'];
+    const hackFiles = ['hackv2.js', 'grow.js', 'weaken.js', 'init.js', 'share.js', 'hack.js', 'batch.js', 'batchv2.js'];
 
     // build comprehensive remote server list
     let serverList = ns.read('/text/zombieList.txt').split(',');
@@ -15,7 +15,9 @@ export async function main(ns) {
     // kill scripts on remote server
     for (let i in serverList) {
         let current = serverList[i];
-        ns.killall(current);
+        if (current != 'home') {
+            ns.killall(current);
+        }
     }
 
     // kill scripts on home server, leave expand.js running

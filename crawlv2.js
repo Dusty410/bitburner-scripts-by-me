@@ -150,14 +150,19 @@ export async function main(ns) {
         return pathsList;
     }
 
-    function backdoorStoryServers(serverList, storyPaths) {
+    async function backdoorStoryServers(serverList, storyPaths) {
         for (let i in storyPaths) {
             let current = storyPaths[i];
             for (let j in current.path) {
                 ns.singularity.connect(current.path[j]);
             }
             if (ns.getHackingLevel() >= ns.getServerRequiredHackingLevel(current.name)) {
-                ns.singularity.installBackdoor();
+                if (!ns.hasRootAccess(current.name)) {
+                    await ns.singularity.installBackdoor();
+                    ns.tprint("Backdoor installed on " + current.name);
+                } else {
+                    ns.tprint("Backdoor already installed on " + current.name);
+                }
             } else {
                 ns.tprint(
                     "Can't backdoor " + current.name +
@@ -254,7 +259,7 @@ export async function main(ns) {
     buildServerTree('home', serversObjList, 0);
     drawTree(serversObjList);
     let storyPaths = getStoryServerPaths(serversObjList);
-    backdoorStoryServers(serversObjList, storyPaths);
+    await backdoorStoryServers(serversObjList, storyPaths);
 
     for (let i in serversObjList) {
         let current = serversObjList[i];

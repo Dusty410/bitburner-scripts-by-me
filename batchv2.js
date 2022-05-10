@@ -1,13 +1,23 @@
 /** @param {import(".").NS } ns */
 export async function main(ns) {
-    var server = ns.args[0];
-    var target = ns.args[1];
+    let server = ns.args[0];
+    let target = ns.args[1];
+
+    // script RAM costs
+    const hackScriptRAM = ns.getScriptRam('hackv2.js');
+    const growScriptRAM = ns.getScriptRam('grow.js');
+    const weakenScriptRAM = ns.getScriptRam('weaken.js');
+    const batchScriptRAM = ns.getScriptRam('batchv2.js');
+    const chauffeurScriptRAM = ns.getScriptRam('chauffeur.js');
+
+    // amount to stagger scripts by
+    const stagger = 200;
 
     // figure out free ram on server, with special circumstances for home
-    var freeRAM;
+    let freeRAM;
     if (server == 'home') {
-        freeRAM = ns.getServerMaxRam(server) - ns.getScriptRam('hacknet.js') - ns.getScriptRam('expand.js') -
-            (ns.getScriptRam('batch.js') * (ns.getPurchasedServers().length + 1)) - 32;
+        freeRAM = ns.getServerMaxRam(server) - chauffeurScriptRAM -
+            (batchScriptRAM * (ns.getPurchasedServers().length + 1)) - 32;
     } else {
         freeRAM = ns.getServerMaxRam(server) - ns.getServerUsedRam(server);
     }
@@ -25,51 +35,78 @@ export async function main(ns) {
 
     // weaken to min security
     if (ns.getServerSecurityLevel(target) > ns.getServerMinSecurityLevel(target)) {
-        var initWeakenThreadsIdeal = Math.ceil((ns.getServerSecurityLevel(target) - ns.getServerMinSecurityLevel(target)) / 0.05);
-        var initWeakenThreadsRAMAllow = Math.floor(freeRAM / ns.getScriptRam('weaken.js'));
-        var numWeakenRounds = Math.ceil(initWeakenThreadsIdeal / initWeakenThreadsRAMAllow);
+        let initWeakenThreadsIdeal = Math.ceil((ns.getServerSecurityLevel(target) - ns.getServerMinSecurityLevel(target)) / 0.05);
+        let initWeakenThreadsRAMAllow = Math.floor(freeRAM / weakenScriptRAM);
+        let numWeakenRounds = Math.ceil(initWeakenThreadsIdeal / initWeakenThreadsRAMAllow);
 
-        for (let index = 0; index < numWeakenRounds; index++) {
+        for (let i = 0; i < numWeakenRounds; i++) {
             ns.exec('weaken.js', server, initWeakenThreadsRAMAllow, target, 0, Math.random());
             await ns.sleep(ns.getWeakenTime(target) + 200);
         }
     }
 
     // grow money while reverting sec incr from grows
-    while (ns.getServerMoneyAvailable(target) < ns.getServerMaxMoney(target)) {
-        var initGrowFactor = ns.getServerMaxMoney(target) / ns.getServerMoneyAvailable(target);
-        var initGrowThreadsIdeal = Math.ceil(ns.growthAnalyze(target, initGrowFactor));
-        var initGrowThreadsRAMAllow = Math.floor(ns.getServerMaxRam(server) / ns.getScriptRam('weaken.js'));
-        var initGrowThreads = Math.min(initGrowThreadsIdeal, initGrowThreadsRAMAllow);
+    while (ns.getServerMoneyAvailable(target) < ns.getServerMaxMoney(target)
+        && ns.getServerSecurityLevel(target) > ns.getServerMinSecurityLevel(target)) {
+        let initGrowFactorIdeal = ns.getServerMaxMoney(target) / ns.getServerMoneyAvailable(target);
 
-        var breakFlag = false; // set flag to prevent total_ram overrun
-        for (let i = 1; i <= initGrowFactor; i += 0.1) {
+        // let initGrowThreadsIdeal = Math.ceil(ns.growthAnalyze(target, initGrowFactor));
+        // let initGrowThreadsRAMAllow = Math.floor(ns.getServerMaxRam(server) / ns.getScriptRam('weaken.js'));
+        // let initGrowThreads = Math.min(initGrowThreadsIdeal, initGrowThreadsRAMAllow);
 
+        let breakFlag = false; // set flag to prevent totalRAM overrun
+        let initGrowFactor = ns.formulas.hacking.growPercent(ns.getServer(target), 1, ns.getPlayer());
+        let initGrowIncrement = ns.formulas.hacking.growPercent(ns.getServer(target), 2, ns.getPlayer())
+            - initGrowFactor;
+        for (initGrowFactor; initGrowFactor <= initGrowFactorIdeal; initGrowFactor += initGrowIncrement) {
+            // determine grow and weaken threads based on incremental grow factor
+            var initGrowThreads = Math.ceil(ns.growthAnalyze(target, initGrowFactor));
+            let initGrowSecIncr = ns.growthAnalyzeSecurity(initGrowThreads);
+            var initWeakenThreads = Math.ceil(initGrowSecIncr / 0.05);
+
+            // determine total ram possible
+            let initGrowRAM = initGrowThreads * growScriptRAM;
+            let initWeakenRAM = initWeakenThreads * weakenScriptRAM;
+            let initTotalRAM = initGrowRAM + initWeakenRAM;
+
+            // check if we should break the loop
+            if (breakFlag) {
+                break;
+            }
+
+            // check if ram has overrun, if it has, set break flag, and set loop to last iteration
+            if (initTotalRAM > freeRAM) {
+                breakFlag = true;
+                initGrowFactor -= initGrowIncrement * 2;
+            }
         }
+
+        // get times for staggering
+        let initWeakenTime = Math.ceil(ns.getWeakenTime(target));
+        let initGrowTime = Math.ceil(ns.getGrowTime(target));
+
+        ns.exec('weaken.js', server, initWeakenThreads, target, 0, Math.random());
+        ns.exec('grow.js', server, initGrowThreads, target, (initWeakenTime - initGrowTime - stagger), Math.random());
+        await ns.sleep(initWeakenTime + stagger);
     }
 
     // determine highest steal factor, given a server's available RAM
-    var breakFlag = false; // set flag to prevent total_ram overrun
+    let breakFlag = false; // set flag to prevent totalRAM overrun
     for (let i = 0; i < 100; i++) {
-        var serverMaxMoney = ns.getServerMaxMoney(target);
-        var stealFactor = i / 100; // divide by 100 to get steal factor
-        var targetMoney = serverMaxMoney * stealFactor;
-        // RAM cost for 1 thread for ea script
-        var hackRAMCost = ns.getScriptRam('hackv2.js');
-        var growRAMCost = ns.getScriptRam('grow.js');
-        var weakenRAMCost = ns.getScriptRam('weaken.js');
+        let stealFactor = i / 100; // divide by 100 to get steal factor
+        let moneyToSteal = ns.getServerMaxMoney(target) * stealFactor;
 
         // ==HACK==
         // get number of threads needed to take specific amount of money
-        var hackThreads = Math.floor(ns.hackAnalyzeThreads(target, targetMoney));
+        var hackThreads = Math.floor(ns.hackAnalyzeThreads(target, moneyToSteal));
         // get security increase if hacked with hack_threads
-        var hackSecIncr = ns.hackAnalyzeSecurity(hackThreads);
+        let hackSecIncr = ns.hackAnalyzeSecurity(hackThreads);
 
         // ==GROW==
         // num threads to use to grow money to reverse last hack
         var growThreads = Math.ceil(ns.growthAnalyze(target, (1 / (1 - stealFactor))));
         // get security increase from grow with grow_threads
-        var growSecIncr = ns.growthAnalyzeSecurity(growThreads);
+        let growSecIncr = ns.growthAnalyzeSecurity(growThreads);
 
         // ==WEAKEN==
         // get number of threads to reverse incr from hack
@@ -78,10 +115,10 @@ export async function main(ns) {
         var weakenGrowThreads = Math.ceil(growSecIncr / 0.05);
 
         // ram
-        var hackRAM = hackThreads * hackRAMCost;
-        var weakenHackRAM = weakenHackThreads * weakenRAMCost;
-        var growRAM = growThreads * growRAMCost;
-        var weakenGrowRAM = weakenGrowThreads * weakenRAMCost;
+        let hackRAM = hackThreads * hackScriptRAM;
+        let weakenHackRAM = weakenHackThreads * weakenScriptRAM;
+        let growRAM = growThreads * growScriptRAM;
+        let weakenGrowRAM = weakenGrowThreads * weakenScriptRAM;
         var totalRAM = hackRAM + weakenHackRAM + growRAM + weakenGrowRAM;
 
         if (breakFlag) {
@@ -95,19 +132,16 @@ export async function main(ns) {
         }
     }
 
-    // amount to stagger scripts by
-    var stagger = 200;
-
-    // possible batches, based solely on free_ram
-    var numBatchesRAM = Math.floor(freeRAM / totalRAM);
+    // possible batches, based solely on freeRAM
+    let numBatchesRAM = Math.floor(freeRAM / totalRAM);
 
     // possible batches, based solely on time
-    var batchTotalTime = Math.ceil(ns.getWeakenTime(target)) + (stagger * 3);
-    var timeBetweenBatches = stagger * 4;
-    var numBatchesTime = Math.floor(batchTotalTime / timeBetweenBatches);
+    let batchTotalTime = Math.ceil(ns.getWeakenTime(target)) + (stagger * 3);
+    let timeBetweenBatches = stagger * 4;
+    let numBatchesTime = Math.floor(batchTotalTime / timeBetweenBatches);
 
     // determine the lower of num_batches_ram and num_batches_time
-    var numBatches = Math.min(numBatchesRAM, numBatchesTime);
+    let numBatches = Math.min(numBatchesRAM, numBatchesTime);
 
     // loop and create batches, sleep on the server side, not on home
     // only sleep on home between batch send
@@ -117,36 +151,12 @@ export async function main(ns) {
     if (numBatches >= 1) {
         while (true) {
             for (let i = 0; i < numBatches; i++) {
-
                 // get time in ms to hack server
-                var hackTime = Math.ceil(ns.getHackTime(target));
+                let hackTime = Math.ceil(ns.getHackTime(target));
                 // get time in ms to grow server
-                var growTime = Math.ceil(ns.getGrowTime(target));
+                let growTime = Math.ceil(ns.getGrowTime(target));
                 // get time in ms to weaken after hack & grow
-                var weakenTime = Math.ceil(ns.getWeakenTime(target));
-
-                // stats, to debug
-                /**
-                ns.print(
-                    "\n\nhack threads needed to hack $" + Intl.NumberFormat('en-US').format(target_money) + " (" +
-                    (steal_factor * 100) + ")% from " + target + ": " + hack_threads + " (RAM: " + hack_ram + " GiB)" +
-                    "\nhack time: " + hack_time +
-                    "\nhack sec incr with " + hack_threads + " threads: " + hack_sec_incr +
-                    "\nweaken threads to reverse sec incr from hack: " + weaken_hack_threads + " (RAM: " + weaken_hack_ram + " GiB)" +
-                    "\nweaken time: " + weaken_time +
-                    "\ngrow threads needed to grow money back to 100%: " + grow_threads + " (RAM: " + grow_ram + " GiB)" +
-                    "\ngrow time: " + grow_time +
-                    "\ngrow sec incr with " + grow_threads + " threads: " + grow_sec_incr +
-                    "\nweaken threads to reverse sec incr from grow: " + weaken_grow_threads + " (RAM: " + weaken_grow_ram + " GiB)" +
-                    "\nweaken time: " + weaken_time +
-                    "\ntotal ram: " + total_ram + " GiB" +
-                    "\nsingle batch time: " + batch_total_time +
-                    "\ntime between batch exec: " + time_between_batches +
-                    "\nthis batch could be run " + num_batches_ram + " times based on RAM" +
-                    "\nthis batch could be run " + num_batches_time + " times based on time" +
-                    "\nit should be run " + num_batches
-                );
-                */
+                let weakenTime = Math.ceil(ns.getWeakenTime(target));
 
                 // 1st weaken, counter hack, finishes 2nd
                 ns.exec('weaken.js', server, weakenHackThreads, target, 0, Math.random());
