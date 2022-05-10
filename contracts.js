@@ -1,6 +1,6 @@
 /** @param {import(".").NS } ns */
 export async function main(ns) {
-
+    
 }
 
 // for hamming codes contracts

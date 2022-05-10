@@ -7,7 +7,7 @@ export async function main(ns) {
     ns.clearLog();
 
     const storyServers = ['CSEC', 'avmnite-02h', 'I.I.I.I', 'run4theh111z', 'The-Cave'];
-    const hackFiles = ['hackv2.js','grow.js','weaken.js','init.js','share.js','hack.js'];
+    const hackFiles = ['hackv2.js', 'grow.js', 'weaken.js', 'init.js', 'share.js', 'hack.js'];
 
     function attemptNuke(server) {
         // open ports
