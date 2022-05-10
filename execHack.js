@@ -4,7 +4,6 @@ export async function main(ns) {
 
     var serverList = ns.read('/text/zombieList.txt').split(',');
     serverList.unshift('home');
-    serverList.concat(ns.getPurchasedServers());
     var targetList = ns.read('/text/targetList.txt').split(',');
     var iterList = serverList.length < targetList.length ? serverList : targetList;
 

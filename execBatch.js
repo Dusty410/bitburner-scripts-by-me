@@ -3,7 +3,7 @@ export async function main(ns) {
     // ns.run('killswitch.js');
     // await ns.sleep(1000);
 
-    ns.tprint("Running batch scripts...");
+    // ns.tprint("Running batch scripts...");
 
     var droidsList = ns.getPurchasedServers();
     var hacknetList = ns.read('/text/hacknetList.txt').split(',');

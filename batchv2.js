@@ -48,18 +48,6 @@ export async function main(ns) {
         }
     }
 
-    // initialize money and sec
-    // var init_threads = Math.floor(free_ram / ns.getScriptRam('init.js'));
-    // if (ns.getServerSecurityLevel(target) > ns.getServerMinSecurityLevel(target) ||
-    //     ns.getServerMoneyAvailable(target) < ns.getServerMaxMoney(target)) {
-    //     ns.exec('init.js', server, init_threads, target);
-    // }
-
-    // while (ns.getServerSecurityLevel(target) > ns.getServerMinSecurityLevel(target) ||
-    //     ns.getServerMoneyAvailable(target) < ns.getServerMaxMoney(target)) {
-    //     await ns.sleep(25);
-    // }
-
     // determine highest steal factor, given a server's available RAM
     var breakFlag = false; // set flag to prevent total_ram overrun
     for (let i = 0; i < 100; i++) {
