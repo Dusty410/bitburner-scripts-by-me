@@ -259,7 +259,7 @@ export async function main(ns) {
     for (let i in serversObjList) {
         let current = serversObjList[i];
         // build zombie list
-        if (ns.getServer(current.name).hasAdminRights && ns.getServerMaxRam(current.name) > 0) {
+        if (ns.hasRootAccess(current.name) && ns.getServerMaxRam(current.name) > 0) {
             zombieList.push(current.name);
         }
 
