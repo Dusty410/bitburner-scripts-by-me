@@ -2,7 +2,7 @@
 export async function main(ns) {
 	ns.tprint("Refining target list...");
 
-	var target_list = ns.read('/text/target_list.txt').split(',');
+	var target_list = ns.read('/text/targetList.txt').split(',');
 	var refined_targets = [];
 	var new_target_list = [];
 	for (let i in target_list) {
@@ -19,5 +19,5 @@ export async function main(ns) {
 
 	ns.print(new_target_list);
 	// ns.tprint("Refined target count: " + new_target_list.length);
-	await ns.write('/text/new_target_list.txt', new_target_list, 'w');
+	await ns.write('/text/targetList.txt', new_target_list, 'w');
 }

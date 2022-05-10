@@ -6,6 +6,9 @@ export async function main(ns) {
     ns.disableLog('ALL');
     ns.clearLog();
 
+    const storyServers = ['CSEC', 'avmnite-02h', 'I.I.I.I', 'run4theh111z', 'The-Cave'];
+    const hackFiles = ['hackv2.js','grow.js','weaken.js','init.js','share.js','hack.js'];
+
     function attemptNuke(server) {
         // open ports
         if (ns.fileExists('BruteSSH.exe') && !ns.getServer(server).sshPortOpen) {
@@ -56,10 +59,9 @@ export async function main(ns) {
     }
 
     function hasYoungerSibling(serverList, serverName) {
-        let serverObj = getServerObj(serverList, serverName);
-        let serverParentObj = getServerObj(serverList, serverObj.parent);
+        let parentObj = getParentObj(serverList, serverName);
 
-        if (serverParentObj.children.indexOf(serverName) == serverParentObj.children.length - 1) {
+        if (parentObj.children.indexOf(serverName) == parentObj.children.length - 1) {
             return false;
         } else {
             return true;
@@ -81,10 +83,10 @@ export async function main(ns) {
             }
 
             serverString += current.name;
-            
+
 
             // post a square based on backdoor status of one of the story significant servers
-            if (['CSEC', 'avmnite-02h', 'I.I.I.I', 'run4theh111z', 'The-Cave'].includes(current.name)) {
+            if (storyServers.includes(current.name)) {
                 if (ns.getPlayer().hacking < ns.getServerRequiredHackingLevel(current.name)) {
                     serverString += '\uD83D\uDFE5'; // red square, can't backdoor
                 } else if (!ns.getServer(current.name).backdoorInstalled) {
@@ -123,7 +125,51 @@ export async function main(ns) {
         }
     }
 
-    function getServerTree(server, masterList, depth) {
+    function getPathToServer(serverList, target) {
+        let serverPath = [];
+        let serverObj = getServerObj(serverList, target);
+
+        while (serverObj.depth > 0) {
+            serverPath.unshift(serverObj.name);
+            serverObj = getParentObj(serverList, serverObj.name);
+        }
+
+        return serverPath;
+    }
+
+    function getStoryServerPaths(serverList) {
+        let pathsList = [];
+        for (let i in storyServers) {
+            let current = storyServers[i];
+            let targetPathObj = {
+                name: current,
+                path: getPathToServer(serverList, current)
+            }
+            pathsList.push(targetPathObj);
+        }
+        return pathsList;
+    }
+
+    function backdoorStoryServers(serverList, storyPaths) {
+        for (let i in storyPaths) {
+            let current = storyPaths[i];
+            for (let j in current.path) {
+                ns.singularity.connect(current.path[j]);
+            }
+            if (ns.getHackingLevel() >= ns.getServerRequiredHackingLevel(current.name)) {
+                ns.singularity.installBackdoor();
+            } else {
+                ns.tprint(
+                    "Can't backdoor " + current.name +
+                    ", need hacking level of " +
+                    ns.getServerRequiredHackingLevel(current.name)
+                );
+            }
+            ns.singularity.connect('home');
+        }
+    }
+
+    function buildServerTree(server, masterList, depth) {
 
         attemptNuke(server);
 
@@ -159,7 +205,7 @@ export async function main(ns) {
             // search for new nodes based on children
             for (let i in serverObj.children) {
                 let child = serverObj.children[i];
-                getServerTree(child, masterList, depth + 1);
+                buildServerTree(child, masterList, depth + 1);
             }
 
         } else {
@@ -168,10 +214,74 @@ export async function main(ns) {
         }
     }
 
-    let serverList = [];
-    getServerTree('home', serverList, 0);
-    drawTree(serverList);
-    // ns.tprint(serverList);
+    function refineTargets(targetList) {
+        let refinedTargets = [];
+        let newTargetList = [];
+        for (let i in targetList) {
+            let target = targetList[i];
+            let targetMinSec = ns.getServerMinSecurityLevel(target);
+            refinedTargets.push({ server: target, minSec: targetMinSec });
+        }
+        refinedTargets.sort(function (a, b) { return a.minSec - b.minSec });
+        // create an array of just target names, but now they'll be in order from least security to most
+        for (let i in refinedTargets) {
+            newTargetList.push(refinedTargets[i].server);
+        }
 
-    // await ns.write('/text/serverObjectList.txt', serverList, 'w');
+        return newTargetList;
+    }
+
+    async function copyScripts(zombieList, hacknetList) {
+        let serverList = [];
+        serverList = serverList.concat(zombieList);
+        serverList = serverList.concat(hacknetList);
+        serverList = serverList.concat(ns.getPurchasedServers());
+
+        for (let i in serverList) {
+            let current = serverList[i];
+            await ns.scp(hackFiles, current);
+        }
+    }
+
+    let serversObjList = [];
+    // zombies are nuked servers that we can use to hack other servers
+    let zombieList = [];
+    // targets are servers that are hackable, with money > 0
+    let targetList = [];
+    // hacknet servers
+    let hacknetList = [];
+
+    buildServerTree('home', serversObjList, 0);
+    drawTree(serversObjList);
+    let storyPaths = getStoryServerPaths(serversObjList);
+    backdoorStoryServers(serversObjList, storyPaths);
+
+    for (let i in serversObjList) {
+        let current = serversObjList[i];
+        // build zombie list
+        if (ns.getServer(current.name).hasAdminRights && ns.getServerMaxRam(current.name) > 0) {
+            zombieList.push(current.name);
+        }
+
+        // build target list
+        if (ns.getHackingLevel() >= ns.getServerRequiredHackingLevel(current.name) && ns.getServerMaxMoney(current.name) > 0) {
+            targetList.push(current.name);
+        }
+
+        // build hacknet list
+        if (current.name.includes('hacknet')) {
+            hacknetList.push(current.name);
+        }
+    }
+
+    // refine targets
+    targetList = refineTargets(targetList);
+
+    // copy scripts
+    await copyScripts(zombieList, hacknetList);
+
+    // write all lists to their respective files
+    await ns.write('/text/zombieList.txt', zombieList, 'w');
+    await ns.write('/text/targetList.txt', targetList, 'w');
+    await ns.write('/text/hacknetList.txt', hacknetList, 'w');
 }

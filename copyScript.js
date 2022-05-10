@@ -8,11 +8,11 @@ export async function main(ns) {
 		"Copying scripts..."
 	);
 
-	var servers_list = ns.read('/text/server_list.txt').split(',');
-	servers_list = servers_list.concat(ns.getPurchasedServers());
-	var copy_count = 0;
-	for (let i in servers_list) {
-		var server = servers_list[i];
+	var serversList = ns.read('/text/zombieList.txt').split(',');
+	serversList = serversList.concat(ns.getPurchasedServers());
+	var copyCount = 0;
+	for (let i in serversList) {
+		var server = serversList[i];
 		if (ns.hasRootAccess(server)) {
 			if (
 				await ns.scp("hackv2.js", server) &&
@@ -23,11 +23,11 @@ export async function main(ns) {
 				await ns.scp("hack.js", server)
 			) {
 				ns.print("Copied scripts to " + server);
-				copy_count++;
+				copyCount++;
 			}
 		}
 	}
 	ns.tprint(
-		"Successfully copied scripts to " + copy_count + " servers."
+		"Successfully copied scripts to " + copyCount + " servers."
 	);
 }

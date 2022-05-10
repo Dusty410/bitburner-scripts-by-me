@@ -3,7 +3,7 @@ export async function main(ns) {
 	ns.tprint("Killing all scripts...");
 
 	// kill remote servers
-	var server_list = ns.read('/text/server_list.txt').split(',');
+	var server_list = ns.read('/text/zombieList.txt').split(',');
 	server_list = server_list.concat(ns.getPurchasedServers());
 	for (let i in server_list) {
 		var current = server_list[i];

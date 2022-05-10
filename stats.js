@@ -4,7 +4,7 @@ export async function main(ns) {
 	if (ns.args.length > 0) {
 		servers = ns.args;
 	} else {
-		servers = ns.read('/text/target_list.txt').split(',');
+		servers = ns.read('/text/targetList.txt').split(',');
 	}
 
 	for (let i in servers) {

@@ -5,40 +5,40 @@ export async function main(ns) {
 
 	ns.tprint("Running batch scripts...");
 
-	var droids_list = ns.getPurchasedServers();
-	var hacknet_list = ns.read('/text/hacknet_nodes_list.txt').split(',');
-	if (hacknet_list[0] == "") {
-		hacknet_list = [];
+	var droidsList = ns.getPurchasedServers();
+	var hacknetList = ns.read('/text/hacknetList.txt').split(',');
+	if (hacknetList[0] == "") {
+		hacknetList = [];
 	}
 	
-	var servers_list;
-	if (droids_list.length > 0 && hacknet_list.length == 0) {
-		servers_list = droids_list;
+	var serversList;
+	if (droidsList.length > 0 && hacknetList.length == 0) {
+		serversList = droidsList;
 	}
-	if (droids_list.length == 0 && hacknet_list.length > 0) {
-		servers_list = hacknet_list;
+	if (droidsList.length == 0 && hacknetList.length > 0) {
+		serversList = hacknetList;
 	}
-	if (droids_list.length > 0 && hacknet_list.length > 0) {
-		servers_list = droids_list.concat(hacknet_list);
+	if (droidsList.length > 0 && hacknetList.length > 0) {
+		serversList = droidsList.concat(hacknetList);
 	}
-	if (droids_list. length == 0 && hacknet_list.length == 0) {
-		servers_list = ['home'];
+	if (droidsList. length == 0 && hacknetList.length == 0) {
+		serversList = ['home'];
 	}
-	if (droids_list. length > 0 || hacknet_list.length > 0) {
-		servers_list.push('home');
+	if (droidsList. length > 0 || hacknetList.length > 0) {
+		serversList.push('home');
 	}
 
-	var target_list = ns.read('/text/new_target_list.txt').split(',');
-	var iter_list;
+	var targetList = ns.read('/text/targetList.txt').split(',');
+	var iterList;
 	// adding one to account for home
-	if (servers_list.length + 1 <= target_list.length) {
-		iter_list = servers_list;
+	if (serversList.length + 1 <= targetList.length) {
+		iterList = serversList;
 	} else {
-		iter_list = target_list;
+		iterList = targetList;
 	}
-	for (let i in iter_list) {
-		var server = servers_list[i];
-		var target = target_list[i];
+	for (let i in iterList) {
+		var server = serversList[i];
+		var target = targetList[i];
 		ns.run('batch.js', 1, server, target, Math.random());
 	}
 }

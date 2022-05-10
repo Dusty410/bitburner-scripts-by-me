@@ -30,7 +30,7 @@ export async function main(ns) {
 		"┼".padEnd(RAMPad + 1, '─') + "┤"
 	);
 
-	for (let i = 1; i <= 20; i++) {
+	for (let i = 1; i <= ns.getPurchasedServerLimit(); i++) {
 		ns.print(
 			"│" + i.toString().padStart(tierPad, ' ') +
 			"│" + ("$" + Intl.NumberFormat('en-US').format(Math.ceil(ns.getPurchasedServerCost(2 ** i)))).padStart(costPad, ' ') +
