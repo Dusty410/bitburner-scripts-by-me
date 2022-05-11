@@ -4,8 +4,8 @@ export async function main(ns) {
     ns.disableLog('ALL');
     ns.clearLog();
 
-    var server_list = ns.getPurchasedServers();
-    var max_ram = 0;
+    var droidList = ns.getPurchasedServers();
+    var maxRAM = 0;
 
     var nameColumn = "Name";
     var tierColumn = "Tier";
@@ -33,11 +33,11 @@ export async function main(ns) {
         "┼".padEnd(RAMColumnPad + 1, '─') + "┤"
     );
 
-    for (let i in server_list) {
-        var current = server_list[i];
-        var current_ram = ns.getServerMaxRam(current);
-        if (max_ram < current_ram) {
-            max_ram = current_ram;
+    for (let i in droidList) {
+        var current = droidList[i];
+        var currentRAM = ns.getServerMaxRam(current);
+        if (maxRAM < currentRAM) {
+            maxRAM = currentRAM;
         }
         ns.print(
             "│" + current.padStart(nameColumnPad, ' ') + 
@@ -51,4 +51,7 @@ export async function main(ns) {
         "┴".padEnd(tierColumnPad + 1, '─') +
         "┴".padEnd(RAMColumnPad + 1, '─') + "┘"
     );
+
+    let reportString = "Droid count: " + droidList.length;
+    ns.print(reportString + "\n" + "─".repeat(reportString.length));
 }

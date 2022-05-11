@@ -1,7 +1,7 @@
 /** @param {import(".").NS } ns */
 export async function main(ns) {
-    // ns.disableLog('ALL');
-    // ns.clearLog();
+    ns.disableLog('ALL');
+    ns.clearLog();
 
     const minDroidTier = 7;
     const droidNumLimit = ns.getPurchasedServerLimit();
@@ -57,11 +57,13 @@ export async function main(ns) {
         if (
             droidList.length == droidNumLimit &&
             ns.getServerMaxRam(getLowestRAMDroid()) == ns.getServerMaxRam(getHighestRAMDroid()) &&
+            droidTier == Math.log2(highestDroidRAM) &&
             droidTier < droidTierLimit
         ) {
             droidTier++;
         }
 
+        ns.print("Current droid tier: " + droidTier);
         return droidTier;
     }
 
@@ -136,6 +138,7 @@ export async function main(ns) {
             let droidTier = getDroidTierToBuy();
             while (
                 ns.getPurchasedServers().length < droidNumLimit &&
+                ns.getPurchasedServers().length <= ns.read('/text/targetList.txt').split(',').length + 1 &&
                 ns.getPlayer().money > ns.getPurchasedServerCost(2 ** droidTier)
             ) {
                 BuyServer(droidTier);

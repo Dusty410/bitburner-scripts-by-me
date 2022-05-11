@@ -285,6 +285,13 @@ export async function main(ns) {
     // copy scripts
     await copyScripts(zombieList, hacknetList);
 
+    // report each server count
+    ns.tprint(
+        '\nZombie count: ' + zombieList.length +
+        '\nTarget count: ' + targetList.length + 
+        '\nHacknet count: ' + hacknetList.length
+    );
+
     // write all lists to their respective files
     await ns.write('/text/zombieList.txt', zombieList, 'w');
     await ns.write('/text/targetList.txt', targetList, 'w');
