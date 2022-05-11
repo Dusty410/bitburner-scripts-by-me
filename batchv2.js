@@ -22,17 +22,6 @@ export async function main(ns) {
         freeRAM = ns.getServerMaxRam(server) - ns.getServerUsedRam(server);
     }
 
-    /**
-    * grow
-    * time: hack skill, sec level
-    * grow amount: threads
-    * sec incr amount: 0.004 * threads
-    *
-    * weaken
-    * time: hack skill, sec level
-    * sec decr amount: 0.05 * threads
-    */
-
     // weaken to min security
     if (ns.getServerSecurityLevel(target) > ns.getServerMinSecurityLevel(target)) {
         let initWeakenThreadsIdeal = Math.ceil((ns.getServerSecurityLevel(target) - ns.getServerMinSecurityLevel(target)) / 0.05);
@@ -46,18 +35,12 @@ export async function main(ns) {
     }
 
     // grow money while reverting sec incr from grows
-    while (ns.getServerMoneyAvailable(target) < ns.getServerMaxMoney(target)
-        && ns.getServerSecurityLevel(target) > ns.getServerMinSecurityLevel(target)) {
+    while (ns.getServerMoneyAvailable(target) < ns.getServerMaxMoney(target)) {
         let initGrowFactorIdeal = ns.getServerMaxMoney(target) / ns.getServerMoneyAvailable(target);
-
-        // let initGrowThreadsIdeal = Math.ceil(ns.growthAnalyze(target, initGrowFactor));
-        // let initGrowThreadsRAMAllow = Math.floor(ns.getServerMaxRam(server) / ns.getScriptRam('weaken.js'));
-        // let initGrowThreads = Math.min(initGrowThreadsIdeal, initGrowThreadsRAMAllow);
-
         let breakFlag = false; // set flag to prevent totalRAM overrun
         let initGrowFactor = ns.formulas.hacking.growPercent(ns.getServer(target), 1, ns.getPlayer());
-        let initGrowIncrement = ns.formulas.hacking.growPercent(ns.getServer(target), 2, ns.getPlayer())
-            - initGrowFactor;
+        let initGrowIncrement = ns.formulas.hacking.growPercent(ns.getServer(target), 2, ns.getPlayer()) - initGrowFactor;
+
         for (initGrowFactor; initGrowFactor <= initGrowFactorIdeal; initGrowFactor += initGrowIncrement) {
             // determine grow and weaken threads based on incremental grow factor
             var initGrowThreads = Math.ceil(ns.growthAnalyze(target, initGrowFactor));

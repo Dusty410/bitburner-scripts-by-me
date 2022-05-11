@@ -1,7 +1,7 @@
 /** @param {import(".").NS } ns */
 export async function main(ns) {
 
-    const hackFiles = ['hackv2.js', 'grow.js', 'weaken.js', 'init.js', 'share.js', 'hack.js', 'batch.js', 'batchv2.js'];
+    const hackFiles = ['hack.js', 'hackv2.js', 'grow.js', 'weaken.js', 'init.js', 'share.js', 'batch.js', 'batchv2.js'];
 
     // build comprehensive remote server list
     let serverList = ns.read('/text/zombieList.txt').split(',');
