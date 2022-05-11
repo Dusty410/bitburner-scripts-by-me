@@ -1,5 +1,8 @@
 /** @param {import(".").NS } ns */
 export async function main(ns) {
+    // ns.disableLog('ALL');
+    // ns.clearLog();
+
     const minDroidTier = 7;
     const droidNumLimit = ns.getPurchasedServerLimit();
     const droidMaxRAM = ns.getPurchasedServerMaxRam();
@@ -82,7 +85,7 @@ export async function main(ns) {
 
     function getLowestRAMDroid() {
         let droidList = ns.getPurchasedServers();
-        let lowestRAM = ns.getPurchasedServerMaxRam();
+        let lowestRAM = droidMaxRAM;
         let lowestRAMDroid;
 
         for (let i in droidList) {

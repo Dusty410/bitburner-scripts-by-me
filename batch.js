@@ -14,37 +14,6 @@ export async function main(ns) {
         free_ram = ns.getServerMaxRam(server) - ns.getServerUsedRam(server);
     }
 
-    /**
-    * grow
-    * time: hack skill, sec level
-    * grow amount: threads
-    * sec incr amount: 0.004 * threads
-    *
-    * weaken
-    * time: hack skill, sec level
-    * sec decr amount: 0.05 * threads
-    */
-
-    // weaken to min security
-    // if (ns.getServerSecurityLevel(target) > ns.getServerMinSecurityLevel(target)) {
-    //     var init_weaken_to_min = Math.ceil((ns.getServerSecurityLevel(target) - ns.getServerMinSecurityLevel(target)) / 0.05);
-    //     var init_weaken_ram_allow = Math.floor(free_ram / ns.getScriptRam('weaken.js'));
-    //     var num_weaken_rounds = Math.ceil(init_weaken_to_min / init_weaken_ram_allow);
-
-    //     for (let index = 0; index < num_weaken_rounds; index++) {
-    //         ns.exec('weaken.js', server, init_weaken_ram_allow, target, 0, Math.random());
-    //         await ns.sleep(ns.getWeakenTime(target) + 200);
-    //     }
-    // }
-
-    // // grow money while reverting sec incr from grows
-    // while (ns.getServerMoneyAvailable(target) < ns.getServerMaxMoney(target)) {
-    //     var init_grow_factor = ns.getServerMaxMoney(target) / ns.getServerMoneyAvailable(target);
-    //     var init_grow_threads = Math.ceil(ns.growthAnalyze(target, init_grow_factor));
-    //     var init_grow_threads_ram = Math.floor(ns.getServerMaxRam(server) / ns.getScriptRam('weaken.js'));
-    //     // insert ternary assignment here
-    // }
-
     // initialize money and sec
     var init_threads = Math.floor(free_ram / ns.getScriptRam('init.js'));
     if (ns.getServerSecurityLevel(target) > ns.getServerMinSecurityLevel(target) ||
