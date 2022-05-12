@@ -63,7 +63,10 @@ export async function main(ns) {
             droidTier++;
         }
 
-        ns.print("Current droid tier: " + droidTier);
+        ns.print(
+            "Current droid tier: " + droidTier +
+            " Cost: $" + Intl.NumberFormat('en-US').format(ns.getPurchasedServerCost(2 ** droidTier))
+        );
         return droidTier;
     }
 
@@ -87,8 +90,8 @@ export async function main(ns) {
 
     function getLowestRAMDroid() {
         let droidList = ns.getPurchasedServers();
-        let lowestRAM = droidMaxRAM;
-        let lowestRAMDroid;
+        let lowestRAMDroid = getHighestRAMDroid();
+        let lowestRAM = ns.getServerMaxRam(lowestRAMDroid);
 
         for (let i in droidList) {
             let current = droidList[i];
@@ -108,11 +111,11 @@ export async function main(ns) {
         let lowestRAMDroid = getLowestRAMDroid();
         let lowestRAM = ns.getServerMaxRam(lowestRAMDroid);
 
-        return (
-            lowestRAM < droidMaxRAM &&
-            droidList.length == droidNumLimit &&
-            ns.getPlayer().money > ns.getPurchasedServerCost(2 ** getDroidTierToBuy())
-        );
+        let ramCheck = lowestRAM < droidMaxRAM;
+        let countCheck = droidList.length == droidNumLimit;
+        let moneyCheck = ns.getPlayer().money > ns.getPurchasedServerCost(2 ** getDroidTierToBuy());
+
+        return (ramCheck && countCheck && moneyCheck);
     }
 
     async function GrowServers(droid_level) {
@@ -130,15 +133,26 @@ export async function main(ns) {
         while (ns.getServerMaxRam(getLowestRAMDroid()) < droidMaxRAM || ns.getPurchasedServers().length < droidNumLimit) {
             // check if i should delete one
             if (shouldDeleteDroid()) {
-                ns.deleteServer(getLowestRAMDroid());
+                let lowestRAMDroid = getLowestRAMDroid()
+                ns.run('killswitch.js');
+                await ns.sleep(1 * 1e3);
+                let deleted = ns.deleteServer(lowestRAMDroid);
+                if (deleted) {
+                    ns.tprint('Deleted ' + lowestRAMDroid);
+                } else {
+                    ns.tprint('No droids deleted. Check if scripts are running.');
+                }
             }
+
+            // check for new targets
+            // ns.run('crawlv2.js');
 
             // if i have room, buy as many as i can afford
             let boughtDroid = false;
             let droidTier = getDroidTierToBuy();
             while (
                 ns.getPurchasedServers().length < droidNumLimit &&
-                ns.getPurchasedServers().length <= ns.read('/text/targetList.txt').split(',').length + 1 &&
+                ns.getPurchasedServers().length + 1 < ns.read('/text/targetList.txt').split(',').length &&
                 ns.getPlayer().money > ns.getPurchasedServerCost(2 ** droidTier)
             ) {
                 BuyServer(droidTier);
@@ -155,4 +169,5 @@ export async function main(ns) {
     }
 
     await GrowServers();
+    ns.tprint("Droids maxed out.");
 }

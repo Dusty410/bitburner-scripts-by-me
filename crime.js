@@ -7,6 +7,10 @@ export async function main(ns) {
         crime = ns.args[0];
     }
 
+    if (ns.singularity.isBusy()) {
+        ns.singularity.stopAction();
+    }
+
     while (true) {
         if (!ns.singularity.isBusy()) {
             ns.singularity.commitCrime(crime);

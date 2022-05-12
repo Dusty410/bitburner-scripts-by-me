@@ -8,7 +8,7 @@ export async function main(ns) {
     const growScriptRAM = ns.getScriptRam('grow.js');
     const weakenScriptRAM = ns.getScriptRam('weaken.js');
     const batchScriptRAM = ns.getScriptRam('batchv2.js');
-    const chauffeurScriptRAM = ns.getScriptRam('chauffeur.js');
+    const expandDroidsScriptRAM = ns.getScriptRam('expandDroids.js');
 
     // amount to stagger scripts by
     const stagger = 200;
@@ -16,7 +16,7 @@ export async function main(ns) {
     // figure out free ram on server, with special circumstances for home
     let freeRAM;
     if (server == 'home') {
-        freeRAM = ns.getServerMaxRam(server) - chauffeurScriptRAM -
+        freeRAM = ns.getServerMaxRam(server) - expandDroidsScriptRAM -
             (batchScriptRAM * (ns.getPurchasedServers().length + 1)) - 32;
     } else {
         freeRAM = ns.getServerMaxRam(server) - ns.getServerUsedRam(server);
@@ -30,14 +30,16 @@ export async function main(ns) {
 
         for (let i = 0; i < numWeakenRounds; i++) {
             ns.exec('weaken.js', server, initWeakenThreadsRAMAllow, target, 0, Math.random());
-            await ns.sleep(ns.getWeakenTime(target) + 200);
+            await ns.sleep(ns.getWeakenTime(target) + stagger);
         }
     }
 
     // grow money while reverting sec incr from grows
+    let initBreakFlag = false; // set flag to prevent totalRAM overrun
     while (ns.getServerMoneyAvailable(target) < ns.getServerMaxMoney(target)) {
-        let initGrowFactorIdeal = ns.getServerMaxMoney(target) / ns.getServerMoneyAvailable(target);
-        let breakFlag = false; // set flag to prevent totalRAM overrun
+        // less than 1, set to 1, to prevent divide by 0
+        let initTargetMoney = ns.getServerMoneyAvailable(target) < 1 ? 1 : ns.getServerMoneyAvailable(target);
+        let initGrowFactorIdeal = ns.getServerMaxMoney(target) / initTargetMoney;
         let initGrowFactor = ns.formulas.hacking.growPercent(ns.getServer(target), 1, ns.getPlayer());
         let initGrowIncrement = ns.formulas.hacking.growPercent(ns.getServer(target), 2, ns.getPlayer()) - initGrowFactor;
 
@@ -53,15 +55,16 @@ export async function main(ns) {
             let initTotalRAM = initGrowRAM + initWeakenRAM;
 
             // check if we should break the loop
-            if (breakFlag) {
+            if (initBreakFlag) {
                 break;
             }
 
             // check if ram has overrun, if it has, set break flag, and set loop to last iteration
             if (initTotalRAM > freeRAM) {
-                breakFlag = true;
+                initBreakFlag = true;
                 initGrowFactor -= initGrowIncrement * 2;
             }
+            await ns.sleep(25);
         }
 
         // get times for staggering

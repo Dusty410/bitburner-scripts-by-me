@@ -1,4 +1,4 @@
-/** @param {import(".").NS } ns */
+/** @param {import("..").NS } ns */
 export async function main(ns) {
     var target = ns.args[0];
     while (ns.getServerSecurityLevel(target) > ns.getServerMinSecurityLevel(target)) {

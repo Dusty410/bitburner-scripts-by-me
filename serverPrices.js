@@ -1,5 +1,7 @@
 /** @param {import(".").NS } ns */
 export async function main(ns) {
+    const maxTier = Math.log2(ns.getPurchasedServerMaxRam());
+    
     ns.tail();
     ns.disableLog('ALL');
     ns.clearLog();
@@ -30,7 +32,7 @@ export async function main(ns) {
         "┼".padEnd(RAMPad + 1, '─') + "┤"
     );
 
-    for (let i = 1; i <= ns.getPurchasedServerLimit(); i++) {
+    for (let i = 1; i <= maxTier; i++) {
         ns.print(
             "│" + i.toString().padStart(tierPad, ' ') +
             "│" + ("$" + Intl.NumberFormat('en-US').format(Math.ceil(ns.getPurchasedServerCost(2 ** i)))).padStart(costPad, ' ') +

@@ -6,7 +6,7 @@ export async function main(ns) {
     ns.disableLog('ALL');
     ns.clearLog();
 
-    const storyServers = ['CSEC', 'avmnite-02h', 'I.I.I.I', 'run4theh111z', 'The-Cave'];
+    const storyServers = ['CSEC', 'avmnite-02h', 'I.I.I.I', 'run4theh111z', 'The-Cave', 'fulcrumassets', 'powerhouse-fitness'];
     const hackFiles = ['hackv2.js', 'grow.js', 'weaken.js', 'init.js', 'share.js', 'hack.js'];
 
     function attemptNuke(server) {
@@ -88,11 +88,11 @@ export async function main(ns) {
             // post a square based on backdoor status of one of the story significant servers
             if (storyServers.includes(current.name)) {
                 if (ns.getPlayer().hacking < ns.getServerRequiredHackingLevel(current.name)) {
-                    serverString += '\uD83D\uDFE5'; // red square, can't backdoor
+                    serverString += '\uD83D\uDD34'; // red circle, can't backdoor
                 } else if (!ns.getServer(current.name).backdoorInstalled) {
-                    serverString += '\uD83D\uDFE8'; // yellow square, can backdoor, haven't yet
+                    serverString += '\uD83D\uDFE1'; // yellow circle, can backdoor, haven't yet
                 } else {
-                    serverString += '\uD83D\uDFE9'; // green square, backdoor installed
+                    serverString += '\uD83D\uDFE2'; // green circle, backdoor installed
                 }
             }
 
@@ -101,7 +101,7 @@ export async function main(ns) {
             for (let i in fileList) {
                 let currentFile = fileList[i];
                 if (currentFile.includes('.cct')) {
-                    serverString += '\uD83D\uDFE6'; // blue square, contract is present
+                    serverString += '\uD83D\uDCC3'; // page with curl, contract is present
                 }
             }
 
@@ -150,14 +150,14 @@ export async function main(ns) {
         return pathsList;
     }
 
-    async function backdoorStoryServers(serverList, storyPaths) {
+    async function backdoorStoryServers(storyPaths) {
         for (let i in storyPaths) {
             let current = storyPaths[i];
             for (let j in current.path) {
                 ns.singularity.connect(current.path[j]);
             }
             if (ns.getHackingLevel() >= ns.getServerRequiredHackingLevel(current.name)) {
-                if (!ns.hasRootAccess(current.name)) {
+                if (!ns.getServer(current.name).backdoorInstalled) {
                     await ns.singularity.installBackdoor();
                     ns.tprint("Backdoor installed on " + current.name);
                 } else {
@@ -259,7 +259,7 @@ export async function main(ns) {
     buildServerTree('home', serversObjList, 0);
     drawTree(serversObjList);
     let storyPaths = getStoryServerPaths(serversObjList);
-    await backdoorStoryServers(serversObjList, storyPaths);
+    await backdoorStoryServers(storyPaths);
 
     for (let i in serversObjList) {
         let current = serversObjList[i];
@@ -289,6 +289,7 @@ export async function main(ns) {
     ns.tprint(
         '\nZombie count: ' + zombieList.length +
         '\nTarget count: ' + targetList.length + 
+        '\nDroids count: ' + ns.getPurchasedServers().length +
         '\nHacknet count: ' + hacknetList.length
     );
 
