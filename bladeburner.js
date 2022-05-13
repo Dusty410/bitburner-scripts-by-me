@@ -12,3 +12,5 @@ export async function main(ns) {
 // Reaper - max
 // Evasive System - max
 // Hyperdrive - limit 20
+
+// rank 400,000 rank for final black ops

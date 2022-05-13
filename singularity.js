@@ -3,6 +3,8 @@ export async function main(ns) {
     ns.disableLog('ALL');
     ns.clearLog();
     while (true) {
+        ns.run('crawlv2.js');
+
         while (!darkwebProgramsDone) {
             // try and buy all the darkweb programs
             let numOwnedDarkwebPrograms = 0;
@@ -23,8 +25,6 @@ export async function main(ns) {
             var darkwebProgramsDone = ns.singularity.getDarkwebPrograms().length == numOwnedDarkwebPrograms;
             await ns.sleep(1 * 1e3);
         }
-        
-        ns.run('crawlv2.js');
         await ns.sleep(10 * 60 * 1e3);
     }
 }
