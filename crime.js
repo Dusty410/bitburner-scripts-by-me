@@ -11,6 +11,7 @@ export async function main(ns) {
         ns.singularity.stopAction();
     }
 
+    // while (document.getElementsByClassName('MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeMedium MuiButton-textSizeMedium MuiButtonBase-root css-18awf20')) {
     while (true) {
         if (!ns.singularity.isBusy()) {
             ns.singularity.commitCrime(crime);

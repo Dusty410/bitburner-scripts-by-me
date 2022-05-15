@@ -73,54 +73,54 @@ export async function main(ns) {
         for (let i in serverList) {
             let current = serverList[i];
             let serverString = '';
-
-            if (current.depth > 0) {
-                if (hasYoungerSibling(serverList, current.name)) {
-                    serverString += '╞';
-                } else {
-                    serverString += '╘';
+            if (!current.name.includes('hacknet')) {
+                if (current.depth > 0) {
+                    if (hasYoungerSibling(serverList, current.name)) {
+                        serverString += '╞';
+                    } else {
+                        serverString += '╘';
+                    }
                 }
-            }
 
-            serverString += current.name;
+                serverString += current.name;
 
-
-            // post a square based on backdoor status of one of the story significant servers
-            if (storyServers.includes(current.name)) {
-                if (ns.getPlayer().hacking < ns.getServerRequiredHackingLevel(current.name)) {
-                    serverString += '\uD83D\uDD34'; // red circle, can't backdoor
-                } else if (!ns.getServer(current.name).backdoorInstalled) {
-                    serverString += '\uD83D\uDFE1'; // yellow circle, can backdoor, haven't yet
-                } else {
-                    serverString += '\uD83D\uDFE2'; // green circle, backdoor installed
+                // post a square based on backdoor status of one of the story significant servers
+                if (storyServers.includes(current.name)) {
+                    if (ns.getPlayer().hacking < ns.getServerRequiredHackingLevel(current.name)) {
+                        serverString += '\uD83D\uDD34'; // red circle, can't backdoor
+                    } else if (!ns.getServer(current.name).backdoorInstalled) {
+                        serverString += '\uD83D\uDFE1'; // yellow circle, can backdoor, haven't yet
+                    } else {
+                        serverString += '\uD83D\uDFE2'; // green circle, backdoor installed
+                    }
                 }
-            }
 
-            // post a blue square if a contract is present on the server
-            let fileList = ns.ls(current.name);
-            for (let i in fileList) {
-                let currentFile = fileList[i];
-                if (currentFile.includes('.cct')) {
-                    serverString += '\uD83D\uDCC3'; // page with curl, contract is present
+                // post a blue square if a contract is present on the server
+                let fileList = ns.ls(current.name);
+                for (let i in fileList) {
+                    let currentFile = fileList[i];
+                    if (currentFile.includes('.cct')) {
+                        serverString += '\uD83D\uDCC3'; // page with curl, contract is present
+                    }
                 }
-            }
 
-            // if we've jumped up in depth, change string to match
-            if (current.depth < depthString.length) {
-                depthString = depthString.slice(0, -(depthString.length - current.depth));
-            }
+                // if we've jumped up in depth, change string to match
+                if (current.depth < depthString.length) {
+                    depthString = depthString.slice(0, -(depthString.length - current.depth));
+                }
 
-            ns.print(depthString + serverString);
+                ns.print(depthString + serverString);
 
-            // only check for siblings if deep enough, ie not on home
-            if (current.depth > 0) {
-                if (hasYoungerSibling(serverList, current.name) && current.children != null) {
-                    depthString += '│';
+                // only check for siblings if deep enough, ie not on home
+                if (current.depth > 0) {
+                    if (hasYoungerSibling(serverList, current.name) && current.children != null) {
+                        depthString += '│';
+                    } else {
+                        depthString += ' ';
+                    }
                 } else {
                     depthString += ' ';
                 }
-            } else {
-                depthString += ' ';
             }
         }
     }
@@ -159,7 +159,7 @@ export async function main(ns) {
             if (ns.getHackingLevel() >= ns.getServerRequiredHackingLevel(current.name)) {
                 if (!ns.getServer(current.name).backdoorInstalled) {
                     await ns.singularity.installBackdoor();
-                    ns.tprint("Backdoor installed on " + current.name);
+                    ns.tprint("Installed backdoor on " + current.name);
                 } else {
                     ns.tprint("Backdoor already installed on " + current.name);
                 }
@@ -200,7 +200,8 @@ export async function main(ns) {
         if (rootList.length > 0) {
             for (let i in rootList) {
                 let current = rootList[i];
-                if (!ns.getServer(current).purchasedByPlayer && !current.includes('darkweb')) {
+                // if (!ns.getServer(current).purchasedByPlayer && !current.includes('darkweb')) {
+                if (!current.includes('darkweb')) {
                     childrenList.push(current);
                 }
             }
@@ -288,7 +289,7 @@ export async function main(ns) {
     // report each server count
     ns.tprint(
         '\nZombie count: ' + zombieList.length +
-        '\nTarget count: ' + targetList.length + 
+        '\nTarget count: ' + targetList.length +
         '\nDroids count: ' + ns.getPurchasedServers().length +
         '\nHacknet count: ' + hacknetList.length
     );

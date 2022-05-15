@@ -3,9 +3,19 @@ export async function main(ns) {
     ns.disableLog('ALL');
     ns.clearLog();
     while (true) {
+        // update server lists
         ns.run('crawlv2.js');
 
-        while (!darkwebProgramsDone) {
+        // check if we can afford a home memory or core upgrade
+        if (ns.getPlayer().money > ns.singularity.getUpgradeHomeRamCost()) {
+            ns.singularity.upgradeHomeRam();
+        }
+        if (ns.getPlayer().money > ns.singularity.getUpgradeHomeCoresCost()) {
+            ns.singularity.upgradeHomeCores();
+        }
+
+        // try and buy all the darkweb programs
+        if (!darkwebProgramsDone) {
             // try and buy all the darkweb programs
             let numOwnedDarkwebPrograms = 0;
             if (ns.singularity.purchaseTor()) {
@@ -25,6 +35,7 @@ export async function main(ns) {
             var darkwebProgramsDone = ns.singularity.getDarkwebPrograms().length == numOwnedDarkwebPrograms;
             await ns.sleep(1 * 1e3);
         }
-        await ns.sleep(10 * 60 * 1e3);
+
+        await ns.sleep(1 * 60 * 1e3);
     }
 }

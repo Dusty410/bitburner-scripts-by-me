@@ -33,8 +33,18 @@ export async function main(ns) {
             await ns.sleep(ns.getWeakenTime(target) + stagger);
         }
     }
+
+    while (ns.getServerMoneyAvailable(target) < ns.getServerMaxMoney(target)) {
+        // alg idea, double threads until surpassed ram or used threads would grow back to 100%
+        // if double surpasses either of those, revert, halve increase, try again
+        
+        for (let i = 1; i < )
+        ns.formulas.hacking.growPercent(ns.getServer(target), )
+        
+        
+    }
     
-    // TODO: fix algorithm so that the loop breaks
+    // TODO: fix algorithm so that the loop breaks quicker
     // grow money while reverting sec incr from grows
     let initBreakFlag = false; // set flag to prevent totalRAM overrun
     while (ns.getServerMoneyAvailable(target) < ns.getServerMaxMoney(target)) {
@@ -162,7 +172,7 @@ export async function main(ns) {
                 }
             }
         }
-    }
+    } ns.hack
 }
 
 /**
@@ -173,7 +183,7 @@ export async function main(ns) {
  *
  * grow
  * time: hack skill, sec level
- * grow amount: threads
+ * grow amount: threads, target growth rate, sec level
  * sec incr amount: 0.004 * threads
  *
  * weaken
