@@ -34,13 +34,15 @@ export async function main(ns) {
         }
     }
 
+    // new alg to grow money while weakening
     while (ns.getServerMoneyAvailable(target) < ns.getServerMaxMoney(target)) {
         // alg idea, double threads until surpassed ram or used threads would grow back to 100%
         // if double surpasses either of those, revert, halve increase, try again
         
-        for (let i = 1; i < )
-        ns.formulas.hacking.growPercent(ns.getServer(target), )
-        
+        let initGrowFactorIdeal = ns.getServerMaxMoney(target) / ns.getServerMoneyAvailable(target);
+        let initGrowThreadsIdeal = ns.growthAnalyze(target, initGrowFactorIdeal);
+        let initGrowSecIncr = ns.growthAnalyzeSecurity(initGrowThreadsIdeal, target);
+        let initGrowWeakenThreadsIdeal = ns.formulas.hacking.
         
     }
     
@@ -49,8 +51,8 @@ export async function main(ns) {
     let initBreakFlag = false; // set flag to prevent totalRAM overrun
     while (ns.getServerMoneyAvailable(target) < ns.getServerMaxMoney(target)) {
         // less than 1, set to 1, to prevent divide by 0
-        let initTargetMoney = ns.getServerMoneyAvailable(target) < 1 ? 1 : ns.getServerMoneyAvailable(target);
-        let initGrowFactorIdeal = ns.getServerMaxMoney(target) / initTargetMoney;
+        let targetCurrentMoney = ns.getServerMoneyAvailable(target) < 1 ? 1 : ns.getServerMoneyAvailable(target);
+        let initGrowFactorIdeal = ns.getServerMaxMoney(target) / targetCurrentMoney;
         let initGrowFactor = ns.formulas.hacking.growPercent(ns.getServer(target), 1, ns.getPlayer());
         let initGrowIncrement = ns.formulas.hacking.growPercent(ns.getServer(target), 2, ns.getPlayer()) - initGrowFactor;
 
