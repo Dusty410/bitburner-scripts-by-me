@@ -1,7 +1,7 @@
 /** @param {import(".").NS } ns */
 export async function main(ns) {
-    ns.disableLog('ALL');
-    ns.clearLog();
+    // ns.disableLog('ALL');
+    // ns.clearLog();
     while (true) {
         // update server lists
         ns.run('crawlv2.js');
