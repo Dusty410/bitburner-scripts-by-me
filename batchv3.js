@@ -3,14 +3,19 @@ export async function main(ns) {
     let server = ns.args[0];
     let target = ns.args[1];
 
+    // sec incr amounts
+    const hackSecIncr = 0.002;
+    const growSecIncr = 0.004;
+    const weakenSecDecr = 0.05;
+
     // script RAM costs
     const hackScriptRAM = ns.getScriptRam('hackv2.js');
     const growScriptRAM = ns.getScriptRam('grow.js');
     const weakenScriptRAM = ns.getScriptRam('weaken.js');
-    const batchScriptRAM = ns.getScriptRam('batchv2.js');
+    const batchScriptRAM = ns.getScriptRam('batchv3.js');
     const expandDroidsScriptRAM = ns.getScriptRam('expandDroids.js');
 
-    // amount to stagger scripts by
+    // amount to stagger scripts by, in milliseconds
     const stagger = 200;
 
     // figure out free ram on server, with special circumstances for home
@@ -42,7 +47,7 @@ export async function main(ns) {
         let initGrowFactorIdeal = ns.getServerMaxMoney(target) / ns.getServerMoneyAvailable(target);
         let initGrowThreadsIdeal = ns.growthAnalyze(target, initGrowFactorIdeal);
         let initGrowSecIncr = ns.growthAnalyzeSecurity(initGrowThreadsIdeal, target);
-        let initGrowWeakenThreadsIdeal = ns.formulas.hacking.
+        let initWeakenGrowThreadsIdeal = 
         
     }
     
