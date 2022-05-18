@@ -52,6 +52,7 @@ export async function main(ns) {
         "┴".padEnd(RAMColumnPad + 1, '─') + "┘"
     );
 
-    let reportString = "Droid count: " + droidList.length;
-    ns.print(reportString + "\n" + "─".repeat(reportString.length));
+    let countString = "Droid count: " + droidList.length;
+    let limitString = "Droid limit: " + ns.getPurchasedServerLimit();
+    ns.print(countString + "\n" + limitString + "\n" + "─".repeat(limitString.length));
 }

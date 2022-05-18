@@ -34,7 +34,6 @@ export async function main(ns) {
         }
     }
     
-    // TODO: fix algorithm so that the loop breaks
     // grow money while reverting sec incr from grows
     let initBreakFlag = false; // set flag to prevent totalRAM overrun
     while (ns.getServerMoneyAvailable(target) < ns.getServerMaxMoney(target)) {
@@ -77,7 +76,6 @@ export async function main(ns) {
         await ns.sleep(initWeakenTime + stagger);
     }
 
-    // TODO: fix this algorithm so it breaks for low increments
     // determine highest steal factor, given a server's available RAM
     let breakFlag = false; // set flag to prevent totalRAM overrun
     for (let i = 0; i < 100; i++) {

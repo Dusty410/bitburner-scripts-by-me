@@ -4,11 +4,23 @@ export async function main(ns) {
     if (ns.args.length == 0) {
         spendOn = 'Sell for Money';
     } else {
-        spendOn = ns.args[0];
+        switch (ns.args[0]) {
+            case 'corpf':
+                spendOn = 'Sell for Corporation Funds';
+                break;
+            case 'corpr':
+                spendOn = 'Exchange for Corporation Research';
+                break;
+            case 'blader':
+                spendOn = 'Exchange for Bladeburner Rank';
+                break;
+            case 'blades':
+                spendOn = 'Exchange for Bladeburner SP';
+        }
     }
 
-    while(true) {
-        if (ns.hacknet.numHashes() > 4) {
+    while (true) {
+        if (ns.hacknet.numHashes() > ns.hacknet.hashCost(spendOn)) {
             ns.hacknet.spendHashes(spendOn);
         }
         await ns.sleep(1);
