@@ -1,33 +1,25 @@
 /** @param {import(".").NS } ns */
 export async function main(ns) {
-    // TODO: add logic to search for droids that have room to run attacks on a second or third target
+    // TODO: add logic to search for servers that have room to run attacks on a second or third target
+    // have server report num of running scripts to a port, have execBatch read port and assign appropriately
 
     let droidsList = ns.getPurchasedServers();
     let hacknetList = ns.read('/text/hacknetList.txt').split(',');
+    let serversList = [];
+
     if (hacknetList[0] == "") {
         hacknetList = [];
     }
+    // only add hacknet servers if we can't buy servers, should only be for bn.9
+    if (ns.getPurchasedServerLimit() == 0) {
+        serversList = droidsList.concat(hacknetList);
+    } else {
+        serversList = droidsList;
+    }
 
-    let serversList = droidsList.concat(hacknetList);
     serversList.push('home');
 
     let targetList = ns.read('/text/targetList.txt').split(',');
-    
-    // if (droidsList.length > 0 && hacknetList.length == 0) {
-    //     serversList = droidsList;
-    // }
-    // if (droidsList.length == 0 && hacknetList.length > 0) {
-    //     serversList = hacknetList;
-    // }
-    // if (droidsList.length > 0 && hacknetList.length > 0) {
-    //     serversList = droidsList.concat(hacknetList);
-    // }
-    // if (droidsList.length == 0 && hacknetList.length == 0) {
-    //     serversList = ['home'];
-    // }
-    // if (droidsList.length > 0 || hacknetList.length > 0) {
-    //     serversList.push('home');
-    // }
 
     let iterList;
     if (serversList.length <= targetList.length) {

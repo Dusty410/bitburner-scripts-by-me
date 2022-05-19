@@ -1,4 +1,4 @@
-/** @param {import(".").NS } ns */
+/** @param {import("..").NS } ns */
 export async function main(ns) {
     var target_list = ns.args[0].split(',');
     var hack_chance_limit = 0;
