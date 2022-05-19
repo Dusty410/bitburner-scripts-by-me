@@ -3,7 +3,7 @@ export async function main(ns) {
     let server = ns.args[0];
     let target = ns.args[1];
 
-    // sec incr amounts
+    // sec incr/decr amounts
     const HACK_SEC_INCR = 0.002;
     const GROW_SEC_INCR = 0.004;
     const WEAKEN_SEC_DECR = 0.05;
@@ -13,7 +13,14 @@ export async function main(ns) {
     const GROW_SCRIPT_RAM = ns.getScriptRam('grow.js');
     const WEAKEN_SCRIPT_RAM = ns.getScriptRam('weaken.js');
     const BATCH_SCRIPT_RAM = ns.getScriptRam('batchv3.js');
-    const EXPAND_DROIDS_SCRIPT_RAM = ns.getScriptRam('expandDroids.js');
+    const HOME_SCRIPTS = ['expandDroids.js', 'singularity.js', 'HNUpgrade.js', 'HNSpend.js', 'crime.js'];
+
+    // arbitrary amount to keep free on home
+    const HOME_RAM_KEEP_FREE = 32;
+
+    // iter over HOME_SCRIPTS, get ram values, sum together
+    let homeScriptsRAMValues = HOME_SCRIPTS.map((element) => ns.getScriptRam(element));
+    let homeScriptsRAMSum = homeScriptsRAMValues.reduce((total, element) => total + element);
 
     // amount to stagger scripts by, in milliseconds
     const STAGGER = 200;
@@ -21,8 +28,8 @@ export async function main(ns) {
     // figure out free ram on server, with special circumstances for home
     let freeRAM;
     if (server == 'home') {
-        freeRAM = ns.getServerMaxRam(server) - EXPAND_DROIDS_SCRIPT_RAM -
-            (BATCH_SCRIPT_RAM * (ns.getPurchasedServers().length + ns.hacknet.numNodes().length + 1)) - 32;
+        freeRAM = ns.getServerMaxRam(server) - homeScriptsRAMSum -
+            (BATCH_SCRIPT_RAM * (ns.getPurchasedServers().length + ns.hacknet.numNodes().length + 1)) - HOME_RAM_KEEP_FREE;
     } else {
         freeRAM = ns.getServerMaxRam(server) - ns.getServerUsedRam(server);
     }
@@ -131,12 +138,12 @@ export async function main(ns) {
     }
 
     // possible batches, based solely on freeRAM
-    let numBatchesRAM = Math.floor(freeRAM / totalRAM);
+    let numBatchesRAM = Math.max(1, Math.floor(freeRAM / totalRAM));
 
     // possible batches, based solely on time
     let batchTotalTime = Math.ceil(ns.getWeakenTime(target)) + (STAGGER * 3);
     let timeBetweenBatches = STAGGER * 4;
-    let numBatchesTime = Math.floor(batchTotalTime / timeBetweenBatches);
+    let numBatchesTime = Math.max(1, Math.floor(batchTotalTime / timeBetweenBatches));
 
     // determine the lower of numBatchesRAM and numBatchesTime
     let numBatches = Math.min(numBatchesRAM, numBatchesTime);
@@ -146,33 +153,32 @@ export async function main(ns) {
     // 1st arg is target
     // 2nd arg is sleep time
     // 3rd is random number to get unique process id
-    if (numBatches >= 1) {
-        while (true) {
-            for (let i = 0; i < numBatches; i++) {
-                // get time in ms to hack server
-                let hackTime = Math.ceil(ns.getHackTime(target));
-                // get time in ms to grow server
-                let growTime = Math.ceil(ns.getGrowTime(target));
-                // get time in ms to weaken after hack & grow
-                let weakenTime = Math.ceil(ns.getWeakenTime(target));
+    while (true) {
+        for (let i = 0; i < numBatches; i++) {
+            // get time in ms to hack server
+            let hackTime = Math.ceil(ns.getHackTime(target));
+            // get time in ms to grow server
+            let growTime = Math.ceil(ns.getGrowTime(target));
+            // get time in ms to weaken after hack & grow
+            let weakenTime = Math.ceil(ns.getWeakenTime(target));
 
-                // 1st weaken, counter hack, finishes 2nd
-                ns.exec('weaken.js', server, weakenHackThreads, target, 0, Math.random());
-                // 2nd weaken, counter grow, finishes 4th
-                ns.exec('weaken.js', server, weakenGrowThreads, target, (STAGGER * 2), Math.random());
-                // grow, finishes 3rd
-                ns.exec('grow.js', server, growThreads, target, (weakenTime - growTime + STAGGER), Math.random());
-                // hack, finishes 1st
-                ns.exec('hackv2.js', server, hackThreads, target, (weakenTime - hackTime - STAGGER), Math.random());
+            // 1st weaken, counter hack, finishes 2nd
+            ns.exec('weaken.js', server, weakenHackThreads, target, 0, Math.random());
+            // 2nd weaken, counter grow, finishes 4th
+            ns.exec('weaken.js', server, weakenGrowThreads, target, (STAGGER * 2), Math.random());
+            // grow, finishes 3rd
+            ns.exec('grow.js', server, growThreads, target, (weakenTime - growTime + STAGGER), Math.random());
+            // hack, finishes 1st
+            ns.exec('hackv2.js', server, hackThreads, target, (weakenTime - hackTime - STAGGER), Math.random());
 
-                if ((weakenTime + (STAGGER * 3)) / numBatches < STAGGER * 3) {
-                    await ns.sleep(STAGGER * 3);
-                } else {
-                    await ns.sleep((weakenTime + (STAGGER * 3)) / numBatches);
-                }
+            if ((weakenTime + (STAGGER * 3)) / numBatches < STAGGER * 3) {
+                await ns.sleep(STAGGER * 3);
+            } else {
+                await ns.sleep((weakenTime + (STAGGER * 3)) / numBatches);
             }
         }
     }
+
 }
 
 /**

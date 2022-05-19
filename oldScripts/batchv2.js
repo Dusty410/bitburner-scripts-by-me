@@ -1,4 +1,4 @@
-/** @param {import(".").NS } ns */
+/** @param {import("..").NS } ns */
 export async function main(ns) {
     let server = ns.args[0];
     let target = ns.args[1];

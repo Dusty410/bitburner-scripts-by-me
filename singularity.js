@@ -14,6 +14,22 @@ export async function main(ns) {
             ns.singularity.upgradeHomeCores();
         }
 
+        // sleeves
+        let sleeveList = [...Array(ns.sleeve.getNumSleeves()).keys()];
+
+        for (let i in sleeveList) {
+            let crntSlv = sleeveList[i];
+            if (ns.sleeve.getSleeveStats(crntSlv).shock > 0 && ns.sleeve.getTask(crntSlv).task != 'Shock Recovery') {
+                ns.sleeve.setToShockRecovery(crntSlv);
+            }
+
+            if (ns.sleeve.getSleeveStats(crntSlv).sync < 100 &&
+                ns.sleeve.getSleeveStats(crntSlv).shock == 0 &&
+                ns.sleeve.getTask(crntSlv).task != 'Synchronize') {
+                ns.sleeve.setToSynchronize(crntSlv);
+            }
+        }
+
         // try and buy all the darkweb programs
         if (!darkwebProgramsDone) {
             // try and buy all the darkweb programs

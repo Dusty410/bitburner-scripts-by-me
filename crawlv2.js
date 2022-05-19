@@ -7,7 +7,7 @@ export async function main(ns) {
     ns.clearLog();
 
     const storyServers = ['CSEC', 'avmnite-02h', 'I.I.I.I', 'run4theh111z', 'The-Cave', 'fulcrumassets', 'powerhouse-fitness'];
-    const hackFiles = ['hackv2.js', 'grow.js', 'weaken.js', 'init.js', 'share.js', 'hack.js'];
+    const hackFiles = ['hack.js', 'hackv2.js', 'grow.js', 'weaken.js', 'share.js'];
 
     function attemptNuke(server) {
         // open ports
@@ -257,6 +257,8 @@ export async function main(ns) {
     // hacknet servers
     let hacknetList = [];
 
+    let minRAM = ns.getScriptRam('hackv2.js') + ns.getScriptRam('grow.js') + (ns.getScriptRam('weaken.js') * 2);
+
     buildServerTree('home', serversObjList, 0);
     drawTree(serversObjList);
     let storyPaths = getStoryServerPaths(serversObjList);
@@ -265,7 +267,7 @@ export async function main(ns) {
     for (let i in serversObjList) {
         let current = serversObjList[i];
         // build zombie list
-        if (ns.hasRootAccess(current.name) && ns.getServerMaxRam(current.name) > 0) {
+        if (ns.hasRootAccess(current.name) && ns.getServerMaxRam(current.name) > minRAM) {
             zombieList.push(current.name);
         }
 
@@ -275,7 +277,7 @@ export async function main(ns) {
         }
 
         // build hacknet list
-        if (current.name.includes('hacknet')) {
+        if (current.name.includes('hacknet') && ns.getServerMaxRam(current.name) > minRAM) {
             hacknetList.push(current.name);
         }
     }
@@ -289,9 +291,9 @@ export async function main(ns) {
     // report each server count
     ns.tprint(
         '\nZombie count: ' + zombieList.length +
-        '\nTarget count: ' + targetList.length +
         '\nDroids count: ' + ns.getPurchasedServers().length +
-        '\nHacknet count: ' + hacknetList.length
+        '\nHacknet count: ' + hacknetList.length +
+        '\nTarget count: ' + targetList.length
     );
 
     // write all lists to their respective files
