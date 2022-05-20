@@ -2,17 +2,42 @@
 export async function main(ns) {
     // ns.disableLog('ALL');
     // ns.clearLog();
+    let joinedBladeBurner = false;
+    let darkwebProgramsDone = false;
+
+    async function deploy() {
+        ns.run('killswitch.js');
+        await ns.sleep(1 * 1e3);
+        ns.run('execBatch.js');
+    }
+
+    // main loop
     while (true) {
+        function canJoinBladeburner() {
+            let statsEnough = (
+                ns.getPlayer().strength >= 100 &&
+                ns.getPlayer().defense >= 100 &&
+                ns.getPlayer().dexterity >= 100 &&
+                ns.getPlayer().agility >= 100
+            );
+
+            return statsEnough;
+        }
+
         // update server lists
         ns.run('crawlv2.js');
 
         // check if we can afford a home memory or core upgrade
         if (ns.getPlayer().money > ns.singularity.getUpgradeHomeRamCost()) {
             ns.singularity.upgradeHomeRam();
+            await deploy();
         }
         if (ns.getPlayer().money > ns.singularity.getUpgradeHomeCoresCost()) {
             ns.singularity.upgradeHomeCores();
+            await deploy();
         }
+
+        // join factions
 
         // sleeves
         let sleeveList = [...Array(ns.sleeve.getNumSleeves()).keys()];
@@ -28,6 +53,12 @@ export async function main(ns) {
                 ns.sleeve.getTask(crntSlv).task != 'Synchronize') {
                 ns.sleeve.setToSynchronize(crntSlv);
             }
+        }
+
+        // join bladeburner if possible
+        if (canJoinBladeburner() && !joinedBladeBurner) {
+            ns.bladeburner.joinBladeburnerDivision();
+            joinedBladeBurner = true;
         }
 
         // try and buy all the darkweb programs
@@ -48,7 +79,7 @@ export async function main(ns) {
                     }
                 }
             }
-            var darkwebProgramsDone = ns.singularity.getDarkwebPrograms().length == numOwnedDarkwebPrograms;
+            darkwebProgramsDone = ns.singularity.getDarkwebPrograms().length == numOwnedDarkwebPrograms;
             await ns.sleep(1 * 1e3);
         }
 

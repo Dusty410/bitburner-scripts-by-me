@@ -1,5 +1,7 @@
 /** @param {import(".").NS } ns */
 export async function main(ns) {
+    
+
     function shouldAscend(gangMem) {
         let gangMemInfo = ns.gang.getMemberInformation(gangMem);
         let gangMemInfoAsc = ns.gang.getAscensionResult(gangMem);
@@ -26,36 +28,61 @@ export async function main(ns) {
         }
     }
 
-    function buyEquipment(gangMem) {
+    function buyAllEquipment(member) {
 
     }
 
-    async function isWantedPenaltyGrowing() {
-        let firstWantedPenalty = ns.gang.getGangInformation().wantedPenalty;
-        while (firstWantedPenalty == ns.gang.getGangInformation().wantedPenalty) {
-            await ns.sleep(1 * 1e3);
-        }
-        let secondWantedPenalty = ns.gang.getGangInformation().wantedPenalty;
+    function buyAllAugs(member) {
 
-        return firstWantedPenalty < secondWantedPenalty;
+    }
+
+    function getMemTasksRespWant(member) {
+        let memberTasksList = [];
+        let taskList = ns.gang.getTaskNames();
+        for (let i in taskList) {
+            let currentTask = taskList[i];
+            let tasksRespWant = {};
+            
+            ns.gang.setMemberTask(member, currentTask);
+            tasksRespWant.taskName = currentTask;
+            tasksRespWant.respectGain = ns.gang.getMemberInformation(member).respectGain;
+            tasksRespWant.wantedGain = ns.gang.getMemberInformation(member).wantedLevelGain;
+            memberTasksList.unshift(tasksRespWant);
+        }
+    }
+
+    function shouldSwitchTask(member, newTask) {
+        let currentTask = ns.gang.getMemberInformation(member).task;
+        let respectGain = ns.gang.getTaskStats(newTask).baseRespect;
+        let wantedGain = ns.gang.getTaskStats(newTask).baseWanted;
     }
 
     while (true) {
         // recruit, if possible
         if (ns.gang.canRecruitMember()) {
-            let memName = Math.floor(Math.random() * 1e6);
-            ns.gang.recruitMember(memName);
-            ns.gang.setMemberTask(memName, 'Train Combat');
+            let memberName = Math.floor(Math.random() * 1e6);
+            ns.gang.recruitMember(memberName);
+            ns.gang.setMemberTask(memberName, 'Train Combat');
         }
 
-        // set tasks
-        let gangMemList = ns.gang.getMemberNames();
-        for (let i in gangMemList) {
-            let currentMem = gangMemList[i];
-            ns.gang.getMemberInformation(currentMem).upgrades
-        }
+
         await ns.sleep(1 * 1e3);
     }
 }
 
-// wanted penalty: 1 - (respect / (respect + wanted level))
+/**
+ * wanted penalty: 1 - (respect / (respect + wanted level))
+ * wanted gain cannot be greater than 1% of respect gain
+ * otherwise penalty gain increases
+ * 
+ * Task we care about for combat gang:
+ * 
+ * Mug People
+ * Strongarm Civilians
+ * Traffick Illegal Arms
+ * Human Trafficking
+ * Terrorism
+ * Vigilante Justice
+ * Train Combat
+ * Territory Warfare
+ */
