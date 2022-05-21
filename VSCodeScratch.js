@@ -1,4 +1,4 @@
 /** @param {import(".").NS } ns */
 export async function main(ns) {
-    ns.tprint('limit ' + ns.getPurchasedServerLimit());
+    ns.tprint("Timestamp: " + new Date().getTime());
 }

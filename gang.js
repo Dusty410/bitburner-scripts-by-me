@@ -4,7 +4,13 @@ export async function main(ns) {
 
     // TODO: add function to find and track gang warfare ticks, so that all members can switch to territory warfare
     // right before tick, and then switch back right after tick
-    
+    function listenForTick() {
+        let tickTimeStamp;
+
+        
+
+        return tickTimeStamp;
+    }
 
     // ascend if current relevant stats mult would increase to be at least 1 greater
     // use fibonacci for delta ascend values
