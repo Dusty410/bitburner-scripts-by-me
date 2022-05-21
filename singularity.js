@@ -40,6 +40,8 @@ export async function main(ns) {
         // join factions
 
         // sleeves
+        // best gym, powerhouse in sector-12
+        // best univ, zb univ in volhaven
         let sleeveList = [...Array(ns.sleeve.getNumSleeves()).keys()];
 
         for (let i in sleeveList) {

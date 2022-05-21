@@ -17,7 +17,7 @@ export async function main(ns) {
     let getStam = () => ns.bladeburner.getStamina()[0];
     let maxStam = () => Math.floor(ns.bladeburner.getStamina()[1]);
     let halfStam = () => Math.ceil(maxStam() / 2);
-    let actionSuccess = (action) => ns.bladeburner.getActionEstimatedSuccessChance(action.type, action.name);
+    let actionSuccess = (action) => ns.bladeburner.getActionEstimatedSuccessChance(action.type, action.name)[1];
     let doingBlackOp = () => ns.bladeburner.getBlackOpNames().includes(ns.bladeburner.getCurrentAction().name);
     let getHighestSkillLevel = () => Math.max(...SKILLS_TO_MAX.map(ns.bladeburner.getSkillLevel));
     let getLowestSkillLevel = () => Math.min(...SKILLS_TO_MAX.map(ns.bladeburner.getSkillLevel));
@@ -25,9 +25,6 @@ export async function main(ns) {
 
     function updateSkills() {
         let level = getHighestSkillLevel();
-        let lowestSkill = getLowestSkillLevel();
-        let highestSkill = getHighestSkillLevel();
-        let allSkills = ns.bladeburner.getSkillNames();
         if (getHighestSkillLevel() == getLowestSkillLevel()) {
             level++;
         }
@@ -69,7 +66,7 @@ export async function main(ns) {
         }
     }
 
-    // switch cities if pop less than 1e9
+    // switch cities if pop less than 1 billion
     function tryCitySwitch() {
         let goodCities = CITIES.filter(isGoodCity);
         // jump to good city at random, if not in a good one
@@ -78,43 +75,76 @@ export async function main(ns) {
         }
     }
 
+    function getHighAction() {
+        if (actionSuccess(INVESTIGATION) < CHANCE_LMT && actionSuccess(ASSASSINATION) < CHANCE_LMT) {
+            return TRACKING;
+        }
+
+        if (actionSuccess(INVESTIGATION) >= CHANCE_LMT && actionSuccess(ASSASSINATION) < CHANCE_LMT) {
+            return INVESTIGATION;
+        }
+
+        if (actionSuccess(ASSASSINATION) >= CHANCE_LMT) {
+            return ASSASSINATION;
+        }
+    }
+
+    function tryBlackOp() {
+        let blackOps = ns.bladeburner.getBlackOpNames();
+        for (let i in blackOps) {
+            let current = blackOps[i];
+            let checkBlackOp = [];
+            checkBlackOp.push(ns.bladeburner.getRank() >= ns.bladeburner.getBlackOpRank(current));
+            checkBlackOp.push(actionSuccess({ type: 'BlackOps', name: current }) >= CHANCE_LMT)
+            checkBlackOp.push(!doingBlackOp());
+            if (checkBlackOp.every(x => x)) {
+                ns.bladeburner.startAction('BlackOps', current);
+            }
+        }
+    }
+
     // starting actions
-    let highAction = TRACKING;
+    let highAction = getHighAction();
     let lowAction = FIELD_ANALYSIS;
 
     // main loop
     while (true) {
 
         // start low stam action
-        if (getStam() <= halfStam() && ns.bladeburner.getCurrentAction().name != lowAction.name) {
+        let checkLow = [];
+        checkLow.push(getStam() <= halfStam());
+        checkLow.push(ns.bladeburner.getCurrentAction().name != lowAction.name);
+        checkLow.push(!doingBlackOp());
+        if (checkLow.every(x => x)) {
             ns.bladeburner.startAction(lowAction.type, lowAction.name);
         }
 
         // start high stam action
-        if (getStam() >= maxStam() && ns.bladeburner.getCurrentAction().name != highAction.name) {
+        let checkHigh = [];
+        checkHigh.push(getStam() >= maxStam());
+        checkHigh.push(ns.bladeburner.getCurrentAction().name != highAction.name);
+        checkHigh.push(!doingBlackOp());
+        if (checkHigh.every(x => x)) {
             ns.bladeburner.startAction(highAction.type, highAction.name);
         }
 
-        // if chances are good, start investigation
-        if (actionSuccess(INVESTIGATION) > CHANCE_LMT
-            && ns.bladeburner.getCurrentAction().name != ASSASSINATION.name
-            && ns.bladeburner.getCurrentAction().name != INVESTIGATION.name
-            && !doingBlackOp()
-        ) {
-            highAction = INVESTIGATION;
-        }
-
-        // if chances are good, start assassination
-        if (actionSuccess(ASSASSINATION) > CHANCE_LMT
-            && ns.bladeburner.getCurrentAction().name != ASSASSINATION.name
-            && !doingBlackOp()
-        ) {
-            highAction = ASSASSINATION;
+        // check if current highAction should be updated and started
+        let checkInterrupt = [];
+        checkInterrupt.push(getStam() >= halfStam());
+        checkInterrupt.push(getStam < maxStam());
+        checkInterrupt.push(getHighAction().name != highAction.name);
+        checkInterrupt.push(ns.bladeburner.getCurrentAction().name != lowAction.name);
+        checkInterrupt.push(!doingBlackOp());
+        if (checkInterrupt.every(x => x)) {
+            highAction = getHighAction();
+            ns.bladeburner.startAction(highAction.type, highAction.name);
         }
 
         updateSkills();
 
         tryCitySwitch();
+
+        tryBlackOp();
 
         await ns.sleep(1 * 1e3);
     }

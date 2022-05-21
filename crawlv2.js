@@ -60,12 +60,7 @@ export async function main(ns) {
 
     function hasYoungerSibling(serverList, serverName) {
         let parentObj = getParentObj(serverList, serverName);
-
-        if (parentObj.children.indexOf(serverName) == parentObj.children.length - 1) {
-            return false;
-        } else {
-            return true;
-        }
+        return !(parentObj.children.indexOf(serverName) == parentObj.children.length - 1);
     }
 
     function drawTree(serverList) {
@@ -73,7 +68,7 @@ export async function main(ns) {
         for (let i in serverList) {
             let current = serverList[i];
             let serverString = '';
-            if (!current.name.includes('hacknet')) {
+            if (!current.name.includes('hacknet') && !current.name.includes('droid')) {
                 if (current.depth > 0) {
                     if (hasYoungerSibling(serverList, current.name)) {
                         serverString += '╞';
