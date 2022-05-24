@@ -29,38 +29,37 @@ export async function main(ns) {
             level++;
         }
 
-        for (let i in RELEVANT_SKILLS) {
-            let current = RELEVANT_SKILLS[i];
-            if (ns.bladeburner.getSkillLevel(current) < level
-                && ns.bladeburner.getSkillUpgradeCost(current) <= ns.bladeburner.getSkillPoints()
-            ) {
-                switch (current) {
-                    case 'Blade\'s Intuition':
-                    case 'Digital Observer':
-                    case 'Reaper':
-                    case 'Evasive System':
-                        ns.bladeburner.upgradeSkill(current);
-                        break;
-                    case 'Cloak':
-                    case 'Short-Circuit':
-                        if (ns.bladeburner.getSkillLevel(current) < 25) {
+        if (actionSuccess(ASSASSINATION) > 0.9 && ns.bladeburner.getSkillLevel('Overclock') < 90) {
+            ns.bladeburner.upgradeSkill('Overclock');
+        } else {
+            for (let i in RELEVANT_SKILLS) {
+                let current = RELEVANT_SKILLS[i];
+                if (ns.bladeburner.getSkillLevel(current) < level
+                    && ns.bladeburner.getSkillUpgradeCost(current) <= ns.bladeburner.getSkillPoints()
+                ) {
+                    switch (current) {
+                        case 'Blade\'s Intuition':
+                        case 'Digital Observer':
+                        case 'Reaper':
+                        case 'Evasive System':
                             ns.bladeburner.upgradeSkill(current);
-                        }
-                        break;
-                    case 'Tracer':
-                        if (ns.bladeburner.getSkillLevel(current) < 10) {
-                            ns.bladeburner.upgradeSkill(current);
-                        }
-                        break;
-                    case 'Hyperdrive':
-                        if (ns.bladeburner.getSkillLevel(current) < 20) {
-                            ns.bladeburner.upgradeSkill(current);
-                        }
-                        break;
-                    case 'Overclock':
-                        if (actionSuccess(ASSASSINATION) > 0.9 && ns.bladeburner.getSkillLevel(current) < 90) {
-                            ns.bladeburner.upgradeSkill(current);
-                        }
+                            break;
+                        case 'Cloak':
+                        case 'Short-Circuit':
+                            if (ns.bladeburner.getSkillLevel(current) < 25) {
+                                ns.bladeburner.upgradeSkill(current);
+                            }
+                            break;
+                        case 'Tracer':
+                            if (ns.bladeburner.getSkillLevel(current) < 10) {
+                                ns.bladeburner.upgradeSkill(current);
+                            }
+                            break;
+                        case 'Hyperdrive':
+                            if (ns.bladeburner.getSkillLevel(current) < 20) {
+                                ns.bladeburner.upgradeSkill(current);
+                            }
+                    }
                 }
             }
         }
@@ -89,16 +88,17 @@ export async function main(ns) {
         }
     }
 
+    // TODO: add stop for last op, so that we don't leave bn early if we don't want to
     function tryBlackOp() {
         let blackOps = ns.bladeburner.getBlackOpNames();
         for (let i in blackOps) {
             let current = blackOps[i];
             let checkBlackOp = [];
             checkBlackOp.push(ns.bladeburner.getRank() >= ns.bladeburner.getBlackOpRank(current));
-            checkBlackOp.push(actionSuccess({ type: 'BlackOps', name: current }) >= CHANCE_LMT)
+            checkBlackOp.push(actionSuccess({ type: 'Operations', name: current }) >= CHANCE_LMT)
             checkBlackOp.push(!doingBlackOp());
             if (checkBlackOp.every(x => x)) {
-                ns.bladeburner.startAction('BlackOps', current);
+                ns.bladeburner.startAction('Operations', current);
             }
         }
     }

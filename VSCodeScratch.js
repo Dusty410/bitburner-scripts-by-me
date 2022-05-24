@@ -1,4 +1,4 @@
 /** @param {import(".").NS } ns */
 export async function main(ns) {
-    ns.tprint("Timestamp: " + new Date().getTime());
+    ns.tprint("BlackOp names: " + ns.bladeburner.getBlackOpNames());
 }

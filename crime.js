@@ -5,11 +5,21 @@ export async function main(ns) {
 
     const KARMA_FOR_GANG = -54000;
 
-    let crime;
-    if (ns.args.length == 0) {
-        crime = 'Shoplift';
-    } else {
-        crime = ns.args[0];
+    function getCrime() {
+        let shopliftChance = ns.singularity.getCrimeChance('Shoplift');
+        let mugChance = ns.singularity.getCrimeChance('Mug');
+
+        let crimeToCommit = 'Shoplift';
+
+        if (shopliftChance >= 1 && mugChance < 1) {
+            crimeToCommit = 'Mug';
+        }
+
+        if (shopliftChance >= 1 && mugChance >= 1) {
+            crimeToCommit = 'Homicide';
+        }
+
+        return crimeToCommit;
     }
 
     if (ns.singularity.isBusy()) {
@@ -18,8 +28,11 @@ export async function main(ns) {
 
     while (ns.heart.break() > KARMA_FOR_GANG) {
         if (!ns.singularity.isBusy()) {
-            ns.singularity.commitCrime(crime);
+            ns.singularity.commitCrime(getCrime());
             ns.print('Karma: ' + Math.ceil(ns.heart.break()));
+            ns.print('Shoplift chance: ' + ns.singularity.getCrimeChance('Shoplift'));
+            ns.print('Mug chance: ' + ns.singularity.getCrimeChance('Mug'));
+            ns.print('Homicide chance: ' + ns.singularity.getCrimeChance('Homicide'));
         }
         await ns.sleep(25);
     }

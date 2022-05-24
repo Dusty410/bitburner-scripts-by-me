@@ -6,8 +6,8 @@ export async function main(ns) {
     ns.disableLog('ALL');
     ns.clearLog();
 
-    const storyServers = ['CSEC', 'avmnite-02h', 'I.I.I.I', 'run4theh111z', 'The-Cave', 'fulcrumassets', 'powerhouse-fitness'];
-    const hackFiles = ['hackv2.js', 'grow.js', 'weaken.js', 'share.js'];
+    const STORY_SERVERS = ['CSEC', 'avmnite-02h', 'I.I.I.I', 'run4theh111z', 'The-Cave', 'fulcrumassets', 'powerhouse-fitness'];
+    const HACK_FILES = ['hackv2.js', 'grow.js', 'weaken.js', 'share.js'];
 
     function attemptNuke(server) {
         // open ports
@@ -80,7 +80,7 @@ export async function main(ns) {
                 serverString += current.name;
 
                 // post a square based on backdoor status of one of the story significant servers
-                if (storyServers.includes(current.name)) {
+                if (STORY_SERVERS.includes(current.name)) {
                     if (ns.getPlayer().hacking < ns.getServerRequiredHackingLevel(current.name)) {
                         serverString += '\uD83D\uDD34'; // red circle, can't backdoor
                     } else if (!ns.getServer(current.name).backdoorInstalled) {
@@ -134,8 +134,8 @@ export async function main(ns) {
 
     function getStoryServerPaths(serverList) {
         let pathsList = [];
-        for (let i in storyServers) {
-            let current = storyServers[i];
+        for (let i in STORY_SERVERS) {
+            let current = STORY_SERVERS[i];
             let targetPathObj = {
                 name: current,
                 path: getPathToServer(serverList, current)
@@ -145,9 +145,9 @@ export async function main(ns) {
         return pathsList;
     }
 
-    async function backdoorStoryServers(storyPaths) {
-        for (let i in storyPaths) {
-            let current = storyPaths[i];
+    async function backdoorServerList(serverPaths) {
+        for (let i in serverPaths) {
+            let current = serverPaths[i];
             for (let j in current.path) {
                 ns.singularity.connect(current.path[j]);
             }
@@ -240,7 +240,7 @@ export async function main(ns) {
 
         for (let i in serverList) {
             let current = serverList[i];
-            await ns.scp(hackFiles, current);
+            await ns.scp(HACK_FILES, current);
         }
     }
 
@@ -257,7 +257,7 @@ export async function main(ns) {
     buildServerTree('home', serversObjList, 0);
     drawTree(serversObjList);
     let storyPaths = getStoryServerPaths(serversObjList);
-    await backdoorStoryServers(storyPaths);
+    await backdoorServerList(storyPaths);
 
     for (let i in serversObjList) {
         let current = serversObjList[i];
