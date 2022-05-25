@@ -88,17 +88,17 @@ export async function main(ns) {
         }
     }
 
-    // TODO: add stop for last op, so that we don't leave bn early if we don't want to
     function tryBlackOp() {
         let blackOps = ns.bladeburner.getBlackOpNames();
         for (let i in blackOps) {
             let current = blackOps[i];
             let checkBlackOp = [];
             checkBlackOp.push(ns.bladeburner.getRank() >= ns.bladeburner.getBlackOpRank(current));
-            checkBlackOp.push(actionSuccess({ type: 'Operations', name: current }) >= CHANCE_LMT)
+            checkBlackOp.push(actionSuccess({ type: 'Operation', name: current }) >= CHANCE_LMT)
             checkBlackOp.push(!doingBlackOp());
+            checkBlackOp.push(current != 'Operation Daedalus');
             if (checkBlackOp.every(x => x)) {
-                ns.bladeburner.startAction('Operations', current);
+                ns.bladeburner.startAction('Operation', current);
             }
         }
     }
@@ -109,10 +109,14 @@ export async function main(ns) {
 
     // main loop
     while (true) {
+        // try to join the bladeburner faction
+        if (ns.bladeburner.getRank() > 25) {
+            ns.bladeburner.joinBladeburnerFaction();
+        }
 
         // start low stam action
         let checkLow = [];
-        checkLow.push(getStam() <= halfStam());
+        checkLow.push(getStam() <= halfStam() || ns.bladeburner.getActionCountRemaining(highAction.type, highAction.name) == 0);
         checkLow.push(ns.bladeburner.getCurrentAction().name != lowAction.name);
         checkLow.push(!doingBlackOp());
         if (checkLow.every(x => x)) {
@@ -123,6 +127,7 @@ export async function main(ns) {
         let checkHigh = [];
         checkHigh.push(getStam() >= maxStam());
         checkHigh.push(ns.bladeburner.getCurrentAction().name != highAction.name);
+        checkHigh.push(ns.bladeburner.getActionCountRemaining(highAction.type, highAction.name) > 0);
         checkHigh.push(!doingBlackOp());
         if (checkHigh.every(x => x)) {
             ns.bladeburner.startAction(highAction.type, highAction.name);

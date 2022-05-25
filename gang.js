@@ -12,22 +12,25 @@ export async function main(ns) {
         return tickTimeStamp;
     }
 
-    // ascend if current relevant stats mult would increase to be at least 1 greater
-    // use fibonacci for delta ascend values
-    function shouldAscend(gangMem) {
-        let gangMemInfo = ns.gang.getMemberInformation(gangMem);
-        let gangMemInfoAsc = ns.gang.getAscensionResult(gangMem);
+    /**
+     * Check if we should ascend, based on all gang member's ascension multipliers being over 20,
+     * except charisma
+     * 
+     * @param {string} member gang member's name
+     * @returns True if we should ascend
+     */
+    function shouldAscend(member) {
+        let memberInfo = ns.gang.getMemberInformation(member);
+        // asc result is a decimal multipler increase, so 1.1 is an increase of 10%
+        let memberAscResult = ns.gang.getAscensionResult(member);
 
-        // grab only stats that are important to the current task
-        let gangMemCurrentTaskStats = ns.gang.getTaskStats(gangMemInfo.task);
-        let allTaskWeights = Object.getOwnPropertyNames(gangMemCurrentTaskStats).filter(name => name.includes('Weight'));
-        let relevantTaskWeights = allTaskWeights.filter(name => gangMemCurrentTaskStats[name] > 0);
+        // grab list of relevant task weights for member's current task
+        let memberCurrentTaskStats = ns.gang.getTaskStats(memberInfo.task);
+        let allTaskWeightNames = Object.getOwnPropertyNames(memberCurrentTaskStats).filter(name => name.includes('Weight'));
+        let relevantTaskWeights = allTaskWeightNames.filter(name => memberCurrentTaskStats[name] > 0);
 
-        // translate relevant task weights to character stats compare, for before and after asc
-        // get relevant stats for gangMemInfo and for gangMemInfoAsc
-
-
-
+        // translate relevant task weights to memberAscResult stats
+        
     }
 
     function buyAllEquipment(member) {
@@ -42,27 +45,42 @@ export async function main(ns) {
 
     }
 
-    function getMemTasksRespWant(member) {
+    /**
+     * Used to get wanted gain and respect gain for all tasks for a gang member,
+     * which can be useful to determine which task to switch to next
+     * 
+     * @param {String} gangMem gang member's name
+     * @returns list of tasks objects for gang member, and each task's wanted gain and respect gain
+     */
+    function getMemTasksRespWant(gangMem) {
         let memberTasksList = [];
         let taskList = ns.gang.getTaskNames();
-        let originalTask = ns.gang.getMemberInformation(member).task;
+        let originalTask = ns.gang.getMemberInformation(gangMem).task;
         // loop through each task, grabbing respect & wanted for that task
         for (let i in taskList) {
             let currentTask = taskList[i];
             let tasksRespWant = {};
 
-            ns.gang.setMemberTask(member, currentTask);
+            ns.gang.setMemberTask(gangMem, currentTask);
             tasksRespWant.taskName = currentTask;
-            tasksRespWant.respectGain = ns.gang.getMemberInformation(member).respectGain;
-            tasksRespWant.wantedGain = ns.gang.getMemberInformation(member).wantedLevelGain;
+            tasksRespWant.respectGain = ns.gang.getMemberInformation(gangMem).respectGain;
+            tasksRespWant.wantedGain = ns.gang.getMemberInformation(gangMem).wantedLevelGain;
             memberTasksList.push(tasksRespWant);
         }
         // reset member to original task
-        ns.gang.setMemberTask(originalTask);
+        ns.gang.setMemberTask(gangMem, originalTask);
 
         return memberTasksList;
     }
 
+    /**
+     * Determine if gang member should switch to new task, based solely on wanted gain to respect 
+     * gain ratio
+     * 
+     * @param {String} member gang member name
+     * @param {String} newTask task we're checking if we should switch to
+     * @returns true if switching to newTask is advantageous
+     */
     function shouldSwitchTask(member, newTask) {
         let taskStats = getMemTasksRespWant(member).filter(task => task.taskName == newTask)[0];
         return (taskStats.wantedGain / taskStats.respectGain) < 0.01;

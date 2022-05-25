@@ -120,34 +120,41 @@ export async function main(ns) {
         }
     }
 
-    function getPathToServer(serverList, target) {
+    function getPathToServer(serverObjList, target) {
         let serverPath = [];
-        let serverObj = getServerObj(serverList, target);
+        let serverObj = getServerObj(serverObjList, target);
 
         while (serverObj.depth > 0) {
             serverPath.unshift(serverObj.name);
-            serverObj = getParentObj(serverList, serverObj.name);
+            serverObj = getParentObj(serverObjList, serverObj.name);
         }
 
         return serverPath;
     }
 
-    function getStoryServerPaths(serverList) {
+    function getServerPaths(serverObjList, targetList) {
         let pathsList = [];
-        for (let i in STORY_SERVERS) {
-            let current = STORY_SERVERS[i];
+        for (let i in targetList) {
+            let current = targetList[i];
             let targetPathObj = {
                 name: current,
-                path: getPathToServer(serverList, current)
-            }
+                path: getPathToServer(serverObjList, current)
+            };
             pathsList.push(targetPathObj);
         }
         return pathsList;
     }
 
-    async function backdoorServerList(serverPaths) {
-        for (let i in serverPaths) {
-            let current = serverPaths[i];
+    function connectToServer(serverObjList, target) {
+        let pathToServer = getPathToServer(serverObjList, target);
+        pathToServer.forEach(ns.singularity.connect);
+    }
+
+    async function backdoorServerObjList(serverObjList, targetPathsObj) {
+        let origin = ns.singularity.getCurrentServer();
+        ns.singularity.connect('home');
+        for (let i in targetPathsObj) {
+            let current = targetPathsObj[i];
             for (let j in current.path) {
                 ns.singularity.connect(current.path[j]);
             }
@@ -167,6 +174,7 @@ export async function main(ns) {
             }
             ns.singularity.connect('home');
         }
+        connectToServer(serverObjList, origin);
     }
 
     function buildServerTree(server, masterList, depth) {
@@ -244,7 +252,7 @@ export async function main(ns) {
         }
     }
 
-    let serversObjList = [];
+    let serverObjList = [];
     // zombies are nuked servers that we can use to hack other servers
     let zombieList = [];
     // targets are servers that are hackable, with money > 0
@@ -254,13 +262,13 @@ export async function main(ns) {
 
     let minRAM = ns.getScriptRam('hackv2.js') + ns.getScriptRam('grow.js') + (ns.getScriptRam('weaken.js') * 2);
 
-    buildServerTree('home', serversObjList, 0);
-    drawTree(serversObjList);
-    let storyPaths = getStoryServerPaths(serversObjList);
-    await backdoorServerList(storyPaths);
+    buildServerTree('home', serverObjList, 0);
+    drawTree(serverObjList);
+    let storyPathsObj = getServerPaths(serverObjList, STORY_SERVERS);
+    await backdoorServerObjList(serverObjList, storyPathsObj);
 
-    for (let i in serversObjList) {
-        let current = serversObjList[i];
+    for (let i in serverObjList) {
+        let current = serverObjList[i];
         // build zombie list
         if (ns.hasRootAccess(current.name) && ns.getServerMaxRam(current.name) > minRAM) {
             zombieList.push(current.name);
@@ -292,6 +300,7 @@ export async function main(ns) {
     );
 
     // write all lists to their respective files
+    await ns.write('/text/serverObjects.txt', serverObjList, 'w');
     await ns.write('/text/zombieList.txt', zombieList, 'w');
     await ns.write('/text/targetList.txt', targetList, 'w');
     await ns.write('/text/hacknetList.txt', hacknetList, 'w');
