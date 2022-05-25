@@ -1,6 +1,6 @@
 /** @param {import(".").NS } ns */
 export async function main(ns) {
-    // TODO: add logic to search for servers that have room to run attacks on a second or third target
+    // TODO: add logic to search for servers that have room to run attacks on further targets
     // have server report num of running scripts to a port, have execBatch read port and assign appropriately
 
     let droidsList = ns.getPurchasedServers();
@@ -11,13 +11,16 @@ export async function main(ns) {
         hacknetList = [];
     }
     // only add hacknet servers if we can't buy servers, should only be for bn.9
-    if (ns.getPurchasedServerLimit() == 0) {
-        serversList = droidsList.concat(hacknetList);
-    } else {
-        serversList = droidsList;
-    }
+    // if (ns.getPurchasedServerLimit() == 0) {
+    //     serversList = droidsList.concat(hacknetList);
+    // } else {
+    //     serversList = droidsList;
+    // }
 
-    serversList.push('home');
+    // try always running hacks from hacknet
+    serversList = droidsList.concat(hacknetList);
+
+    serversList.unshift('home');
 
     let targetList = ns.read('/text/targetList.txt').split(',');
 

@@ -69,7 +69,7 @@ export async function main(ns) {
     function tryCitySwitch() {
         let goodCities = CITIES.filter(isGoodCity);
         // jump to good city at random, if not in a good one
-        if (!goodCities.includes(ns.bladeburner.getCity())) {
+        if (!goodCities.includes(ns.bladeburner.getCity()) && goodCities.length > 0) {
             ns.bladeburner.switchCity(goodCities[Math.floor(Math.random() * goodCities.length)]);
         }
     }
