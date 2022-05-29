@@ -15,7 +15,7 @@ export async function main(ns) {
     const GROW_SCRIPT_RAM = ns.getScriptRam('grow.js');
     const WEAKEN_SCRIPT_RAM = ns.getScriptRam('weaken.js');
     const BATCH_SCRIPT_RAM = ns.getScriptRam('batchv3.js');
-    const HOME_SCRIPTS = ['gang.js', 'expandDroids.js', 'singularity.js', 'HNUpgrade.js', 'HNSpend.js',
+    const HOME_SCRIPTS = ['sleeve.js', 'gang.js', 'expandDroids.js', 'singularity.js', 'HNUpgrade.js', 'HNSpend.js',
         'crime.js', 'execBatch.js', 'bladeburner.js'];
 
     // arbitrary amount to keep free on home
