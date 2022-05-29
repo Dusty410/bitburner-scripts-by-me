@@ -15,13 +15,14 @@ export async function main(ns) {
     const GROW_SCRIPT_RAM = ns.getScriptRam('grow.js');
     const WEAKEN_SCRIPT_RAM = ns.getScriptRam('weaken.js');
     const BATCH_SCRIPT_RAM = ns.getScriptRam('batchv3.js');
-    const HOME_SCRIPTS = ['expandDroids.js', 'singularity.js', 'HNUpgrade.js', 'HNSpend.js', 'crime.js', 'execBatch.js', 'bladeburner.js'];
-    
+    const HOME_SCRIPTS = ['gang.js', 'expandDroids.js', 'singularity.js', 'HNUpgrade.js', 'HNSpend.js',
+        'crime.js', 'execBatch.js', 'bladeburner.js'];
+
     // arbitrary amount to keep free on home
     const HOME_RAM_KEEP_FREE = 32;
 
     // iter over HOME_SCRIPTS, get ram values, sum together
-    let homeScriptsRAMValues = HOME_SCRIPTS.map((element) => ns.getScriptRam(element));
+    let homeScriptsRAMValues = HOME_SCRIPTS.map(x => ns.getScriptRam(x));
     let homeScriptsRAMSum = homeScriptsRAMValues.reduce((total, element) => total + element);
 
     // amount to stagger scripts by, in milliseconds
@@ -137,6 +138,7 @@ export async function main(ns) {
             breakFlag = true;
             i -= 2;
         }
+        await ns.sleep(1);
     }
 
     // possible batches, based solely on freeRAM

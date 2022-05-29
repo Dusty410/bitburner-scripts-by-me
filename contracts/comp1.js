@@ -8,7 +8,9 @@ Compression I: RLE Compression
 You are attempting to solve a Coding Contract. You have 10 tries remaining, after which the contract will self-destruct.
 
 
-Run-length encoding (RLE) is a data compression technique which encodes data as a series of runs of a repeated single character. Runs are encoded as a length, followed by the character itself. Lengths are encoded as a single ASCII digit; runs of 10 characters or more are encoded by splitting them into multiple runs.
+Run-length encoding (RLE) is a data compression technique which encodes data as a series of runs of a repeated single
+character. Runs are encoded as a length, followed by the character itself. Lengths are encoded as a single ASCII digit;
+runs of 10 characters or more are encoded by splitting them into multiple runs.
 
 You are given the following input string:
     <data>

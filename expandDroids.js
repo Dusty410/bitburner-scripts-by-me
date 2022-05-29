@@ -118,6 +118,9 @@ export async function main(ns) {
         return (ramCheck && countCheck && moneyCheck);
     }
 
+    const getHacknetList = () => ns.read('/text/hacknetList.txt').split(',');
+    const getHacknetCount = () => getHacknetList() == [""] ? 0 : getHacknetList().length;
+
     async function GrowServers(droid_level) {
         // handle buying of first server
         while (ns.getPurchasedServers().length == 0) {
@@ -144,15 +147,12 @@ export async function main(ns) {
                 }
             }
 
-            // check for new targets
-            // ns.run('crawlv2.js');
-
             // if i have room, buy as many as i can afford
             let boughtDroid = false;
             let droidTier = getDroidTierToBuy();
             while (
                 ns.getPurchasedServers().length < droidNumLimit &&
-                ns.getPurchasedServers().length + 1 < ns.read('/text/targetList.txt').split(',').length &&
+                ns.getPurchasedServers().length + getHacknetCount() + 1 < ns.read('/text/targetList.txt').split(',').length &&
                 ns.getPlayer().money > ns.getPurchasedServerCost(2 ** droidTier)
             ) {
                 BuyServer(droidTier);

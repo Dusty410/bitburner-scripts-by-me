@@ -10,12 +10,6 @@ export async function main(ns) {
     if (hacknetList[0] == "") {
         hacknetList = [];
     }
-    // only add hacknet servers if we can't buy servers, should only be for bn.9
-    // if (ns.getPurchasedServerLimit() == 0) {
-    //     serversList = droidsList.concat(hacknetList);
-    // } else {
-    //     serversList = droidsList;
-    // }
 
     // try always running hacks from hacknet
     serversList = droidsList.concat(hacknetList);

@@ -99,6 +99,11 @@ export async function main(ns) {
                     }
                 }
 
+                // mark w0r1d_d43m0n
+                if (current.name == 'w0r1d_d43m0n') {
+                    serverString += '\uD83D\uDE08'; // smiling demon
+                }
+
                 // if we've jumped up in depth, change string to match
                 if (current.depth < depthString.length) {
                     depthString = depthString.slice(0, -(depthString.length - current.depth));

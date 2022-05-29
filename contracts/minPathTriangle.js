@@ -8,7 +8,8 @@ Minimum Path Sum in a Triangle
 You are attempting to solve a Coding Contract. You have 10 tries remaining, after which the contract will self-destruct.
 
 
-Given a triangle, find the minimum path sum from top to bottom. In each step of the path, you may only move to adjacent numbers in the row below. The triangle is represented as a 2D array of numbers:
+Given a triangle, find the minimum path sum from top to bottom. In each step of the path, you may only move to adjacent
+numbers in the row below. The triangle is represented as a 2D array of numbers:
 
 <data>
 

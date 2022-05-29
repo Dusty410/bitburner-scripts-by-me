@@ -18,6 +18,7 @@ export async function main(ns) {
     let maxStam = () => Math.floor(ns.bladeburner.getStamina()[1]);
     let halfStam = () => Math.ceil(maxStam() / 2);
     let actionSuccess = (action) => ns.bladeburner.getActionEstimatedSuccessChance(action.type, action.name)[1];
+    let actionCount = (action) => ns.bladeburner.getActionCountRemaining(action.type, action.name);
     let doingBlackOp = () => ns.bladeburner.getBlackOpNames().includes(ns.bladeburner.getCurrentAction().name);
     let getHighestSkillLevel = () => Math.max(...SKILLS_TO_MAX.map(ns.bladeburner.getSkillLevel));
     let getLowestSkillLevel = () => Math.min(...SKILLS_TO_MAX.map(ns.bladeburner.getSkillLevel));
@@ -75,15 +76,22 @@ export async function main(ns) {
     }
 
     function getHighAction() {
-        if (actionSuccess(INVESTIGATION) < CHANCE_LMT && actionSuccess(ASSASSINATION) < CHANCE_LMT) {
+        if ((actionSuccess(INVESTIGATION) < CHANCE_LMT || actionCount(INVESTIGATION) == 0)
+            && (actionSuccess(ASSASSINATION) < CHANCE_LMT || actionCount(ASSASSINATION) == 0)
+        ) {
             return TRACKING;
         }
 
-        if (actionSuccess(INVESTIGATION) >= CHANCE_LMT && actionSuccess(ASSASSINATION) < CHANCE_LMT) {
+        if (actionSuccess(INVESTIGATION) >= CHANCE_LMT
+            && (actionSuccess(ASSASSINATION) < CHANCE_LMT || actionCount(ASSASSINATION) == 0)
+            && actionCount(INVESTIGATION) > 0
+        ) {
             return INVESTIGATION;
         }
 
-        if (actionSuccess(ASSASSINATION) >= CHANCE_LMT) {
+        if (actionSuccess(ASSASSINATION) >= CHANCE_LMT
+            && actionCount(ASSASSINATION) > 0
+        ) {
             return ASSASSINATION;
         }
     }
@@ -94,17 +102,16 @@ export async function main(ns) {
             let current = blackOps[i];
             let checkBlackOp = [];
             checkBlackOp.push(ns.bladeburner.getRank() >= ns.bladeburner.getBlackOpRank(current));
-            checkBlackOp.push(actionSuccess({ type: 'Operation', name: current }) >= CHANCE_LMT)
+            checkBlackOp.push(actionSuccess({ type: 'BlackOp', name: current }) >= CHANCE_LMT)
             checkBlackOp.push(!doingBlackOp());
             checkBlackOp.push(current != 'Operation Daedalus');
             if (checkBlackOp.every(x => x)) {
-                ns.bladeburner.startAction('Operation', current);
+                ns.bladeburner.startAction('BlackOp', current);
             }
         }
     }
 
     // starting actions
-    let highAction = getHighAction();
     let lowAction = FIELD_ANALYSIS;
 
     // main loop
@@ -113,6 +120,8 @@ export async function main(ns) {
         if (ns.bladeburner.getRank() > 25) {
             ns.bladeburner.joinBladeburnerFaction();
         }
+
+        let highAction = getHighAction();
 
         // start low stam action
         let checkLow = [];
@@ -127,7 +136,7 @@ export async function main(ns) {
         let checkHigh = [];
         checkHigh.push(getStam() >= maxStam());
         checkHigh.push(ns.bladeburner.getCurrentAction().name != highAction.name);
-        checkHigh.push(ns.bladeburner.getActionCountRemaining(highAction.type, highAction.name) > 0);
+        // checkHigh.push(ns.bladeburner.getActionCountRemaining(highAction.type, highAction.name) > 0);
         checkHigh.push(!doingBlackOp());
         if (checkHigh.every(x => x)) {
             ns.bladeburner.startAction(highAction.type, highAction.name);
@@ -136,12 +145,11 @@ export async function main(ns) {
         // check if current highAction should be updated and started
         let checkInterrupt = [];
         checkInterrupt.push(getStam() >= halfStam());
-        checkInterrupt.push(getStam < maxStam());
-        checkInterrupt.push(getHighAction().name != highAction.name);
+        checkInterrupt.push(getStam() < maxStam());
+        checkInterrupt.push(ns.bladeburner.getCurrentAction().name != highAction.name)
         checkInterrupt.push(ns.bladeburner.getCurrentAction().name != lowAction.name);
         checkInterrupt.push(!doingBlackOp());
         if (checkInterrupt.every(x => x)) {
-            highAction = getHighAction();
             ns.bladeburner.startAction(highAction.type, highAction.name);
         }
 
