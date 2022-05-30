@@ -5,41 +5,6 @@ export async function main(ns) {
     const ASCEND_CHECK = 1.1;
 
     // TODO: get switchToWarfare and other functions to run in parallel
-    /**
-     * Switch to Territory Warfare right before tick, then switch back right after tick.
-     * This maximizes profit, and points entire gang at Territory Warfare, only when needed
-     */
-    // async function switchToWarfare() {
-    //     let gangMems = ns.gang.getMemberNames();
-    //     let power = ns.gang.getGangInformation().power;
-    //     let currentTask = {};
-    //     gangMems.forEach(
-    //         member => {
-    //             currentTask[member] = ns.gang.getMemberInformation(member).task;
-    //         }
-    //     )
-
-    //     while (ns.gang.getGangInformation().territory < 1) {
-    //         gangMems.forEach(
-    //             member => {
-    //                 ns.gang.setMemberTask(member, 'Territory Warfare');
-    //             }
-    //         )
-    //         // poll for tick
-    //         while (power == ns.gang.getGangInformation().power) {
-    //             await ns.sleep(25);
-    //         }
-    //         // tick should happen by this point
-    //         power = ns.gang.getGangInformation().power;
-    //         gangMems.forEach(
-    //             member => {
-    //                 ns.gang.setMemberTask(member, currentTask[member]);
-    //             }
-    //         )
-    //         await ns.sleep(19.5 * 1e3);
-    //     }
-    //     await ns.sleep(25);
-    // }
 
     /**
      * If chances are good, turn on Engage in Territory Warfare, and if we hae 100% of the
@@ -51,6 +16,7 @@ export async function main(ns) {
             let winChances = otherGangNames.map(ns.gang.getChanceToWinClash);
             // remove our own gang
             winChances.shift();
+            // if all win chances are above 60%, turn on war
             if (winChances.every(x => x > 0.6)) {
                 ns.gang.setTerritoryWarfare(true);
             }
@@ -206,7 +172,7 @@ export async function main(ns) {
         // switch to warfare for tick
         // await switchToWarfare();
 
-        // try to turn on Engage in Territory Warfare
+        // try to turn on gang war
         toggleWar();
 
         await ns.sleep(25);
