@@ -2,8 +2,9 @@
 export async function main(ns) {
     let sleeveList = [...Array(ns.sleeve.getNumSleeves()).keys()];
 
-    let sleeveShock = sleeve => ns.sleeve.getSleeveStats(sleeve).shock;
-    let sleeveSync = sleeve => ns.sleeve.getSleeveStats(sleeve).sync;
+    let getShock = sleeve => ns.sleeve.getSleeveStats(sleeve).shock;
+    let getSync = sleeve => ns.sleeve.getSleeveStats(sleeve).sync;
+    let getCurrentCrime = sleeve => ns.sleeve.getTask(sleeve).crime;
 
     /**
      * Get crime success chance as a decimal for a specific crime, for a specific sleeve
@@ -13,7 +14,7 @@ export async function main(ns) {
      * @param {string} crime 
      * @returns decimal chance of success for specified sleeve & crime, 1 is 100%
      */
-    function getCrimeChanceSleeve(sleeve, crime) {
+    function getCrimeChance(sleeve, crime) {
         let crimeStats = ns.singularity.getCrimeStats(crime);
         let sleeveStats = ns.sleeve.getSleeveStats(+sleeve);
         let sleeveInfo = ns.sleeve.getInformation(+sleeve);
@@ -35,15 +36,15 @@ export async function main(ns) {
             let sleeve = sleeveList[i];
 
             // shock recovery
-            if (sleeveShock(sleeve) > 0
+            if (getShock(sleeve) > 0
                 && ns.sleeve.getTask(sleeve).task != 'Shock Recovery'
             ) {
                 ns.sleeve.setToShockRecovery(sleeve);
             }
 
             // synchronize
-            if (sleeveSync(sleeve) < 100
-                && sleeveShock(sleeve) <= 0
+            if (getSync(sleeve) < 100
+                && getShock(sleeve) <= 0
                 && ns.sleeve.getTask(sleeve).task != 'Synchronize'
             ) {
                 ns.sleeve.setToSynchronize(sleeve);
@@ -51,26 +52,46 @@ export async function main(ns) {
 
             // set to commit crimes
             let crimeCheck = [];
-            crimeCheck.push(sleeveSync(sleeve) >= 100);
-            crimeCheck.push(sleeveShock(sleeve) <= 0);
-            crimeCheck.push(ns.heart.break() > -54000 || ns.sleeve.getTask(sleeve).task == 'Idle');
+            crimeCheck.push(getSync(sleeve) >= 100);
+            crimeCheck.push(getShock(sleeve) <= 0);
+            // crimeCheck.push(ns.heart.break() > -54000 || ns.sleeve.getTask(sleeve).task == 'Idle');
             if (crimeCheck.every(x => x)) {
-                if (getCrimeChanceSleeve(sleeve, 'Shoplift') < 1) {
+                let shopliftCheck = [];
+                shopliftCheck.push(getCrimeChance(sleeve, 'Shoplift') < 1);
+                shopliftCheck.push(getCurrentCrime(sleeve) != 'Shoplift');
+                if (shopliftCheck.every(x => x)) {
                     ns.sleeve.setToCommitCrime(sleeve, 'Shoplift');
                 }
 
-                if (getCrimeChanceSleeve(sleeve, 'Shoplift') >= 1
-                    && getCrimeChanceSleeve(sleeve, 'Mug') < 1
-                ) {
+                let mugCheck = [];
+                mugCheck.push(getCrimeChance(sleeve, 'Shoplift') >= 1);
+                mugCheck.push(getCrimeChance(sleeve, 'Mug') < 1);
+                mugCheck.push(getCurrentCrime(sleeve) != 'Mug');
+                if (mugCheck.every(x => x)) {
                     ns.sleeve.setToCommitCrime(sleeve, 'Mug');
                 }
 
-                if (getCrimeChanceSleeve(sleeve, 'Shoplift') >= 1
-                    && getCrimeChanceSleeve(sleeve, 'Mug') >= 1
-                ) {
+                let homicideCheck = [];
+                homicideCheck.push(getCrimeChance(sleeve, 'Shoplift') >= 1);
+                homicideCheck.push(getCrimeChance(sleeve, 'Mug') >= 1);
+                homicideCheck.push(getCrimeChance(sleeve, 'Homicide') < 1);
+                homicideCheck.push(getCurrentCrime(sleeve) != 'Homicide');
+                if (homicideCheck.every(x => x)) {
                     ns.sleeve.setToCommitCrime(sleeve, 'Homicide');
                 }
+
+                let heistCheck = [];
+                heistCheck.push(getCrimeChance(sleeve, 'Heist') >= 1);
+                heistCheck.push(getCurrentCrime(sleeve) != 'Heist');
+                heistCheck.push(ns.heart.break() <= 54000);
+                if (heistCheck.every(x => x)) {
+                    ns.sleeve.setToCommitCrime(sleeve, 'Heist');
+                }
             }
+
+            // buy augs
+            ns.sleeve.getSleevePurchasableAugs(sleeve).forEach(x => ns.sleeve.purchaseSleeveAug(sleeve, x.name));
+
         }
         await ns.sleep(25);
     }

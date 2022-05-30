@@ -2,7 +2,6 @@
 export async function main(ns) {
     // ns.disableLog('ALL');
     // ns.clearLog();
-    let joinedBladeBurner = false;
 
     async function deploy() {
         ns.run('killswitch.js');
@@ -36,12 +35,11 @@ export async function main(ns) {
             await deploy();
         }
 
-        // TODO: join factions
+        // TODO: join factions, buy augments
 
         // join bladeburner if possible
-        if (canJoinBladeburner() && !joinedBladeBurner) {
+        if (canJoinBladeburner() && !ns.getPlayer().inBladeburner) {
             ns.bladeburner.joinBladeburnerDivision();
-            joinedBladeBurner = true;
         }
 
         // try and buy all the darkweb programs

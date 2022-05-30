@@ -2,20 +2,63 @@
 export async function main(ns) {
     ns.disableLog('sleep');
 
-    const RELEVANT_TASKS = ['Human Trafficking', 'Train Combat', 'Train Hacking', 'Territory Warfare'];
+    const ASCEND_CHECK = 1.1;
 
-    // TODO: add function to find and track gang warfare ticks, so that all members can switch to territory warfare
-    // right before tick, and then switch back right after tick
-    function listenForTick() {
-        let tickTimeStamp;
+    // TODO: get switchToWarfare and other functions to run in parallel
+    /**
+     * Switch to Territory Warfare right before tick, then switch back right after tick.
+     * This maximizes profit, and points entire gang at Territory Warfare, only when needed
+     */
+    // async function switchToWarfare() {
+    //     let gangMems = ns.gang.getMemberNames();
+    //     let power = ns.gang.getGangInformation().power;
+    //     let currentTask = {};
+    //     gangMems.forEach(
+    //         member => {
+    //             currentTask[member] = ns.gang.getMemberInformation(member).task;
+    //         }
+    //     )
 
+    //     while (ns.gang.getGangInformation().territory < 1) {
+    //         gangMems.forEach(
+    //             member => {
+    //                 ns.gang.setMemberTask(member, 'Territory Warfare');
+    //             }
+    //         )
+    //         // poll for tick
+    //         while (power == ns.gang.getGangInformation().power) {
+    //             await ns.sleep(25);
+    //         }
+    //         // tick should happen by this point
+    //         power = ns.gang.getGangInformation().power;
+    //         gangMems.forEach(
+    //             member => {
+    //                 ns.gang.setMemberTask(member, currentTask[member]);
+    //             }
+    //         )
+    //         await ns.sleep(19.5 * 1e3);
+    //     }
+    //     await ns.sleep(25);
+    // }
 
+    /**
+     * If chances are good, turn on Engage in Territory Warfare, and if we hae 100% of the
+     * territory, turn it off
+     */
+    function toggleWar() {
+        if (!ns.gang.getGangInformation().territoryWarfareEngaged && ns.gang.getGangInformation().territory < 1) {
+            let otherGangNames = Object.getOwnPropertyNames(ns.gang.getOtherGangInformation());
+            let winChances = otherGangNames.map(ns.gang.getChanceToWinClash);
+            // remove our own gang
+            winChances.shift();
+            if (winChances.every(x => x > 0.6)) {
+                ns.gang.setTerritoryWarfare(true);
+            }
+        }
 
-        return tickTimeStamp;
-    }
-
-    function attemptTurnOnWar() {
-
+        if (ns.gang.getGangInformation().territoryWarfareEngaged && ns.gang.getGangInformation().territory >= 1) {
+            ns.gang.setTerritoryWarfare(false);
+        }
     }
 
     /**
@@ -80,12 +123,11 @@ export async function main(ns) {
         let relevantTaskWeightNames = allTaskWeightNames.filter(name => memberCurrentTaskStats[name] > 0);
 
         // asc result is a decimal multipler increase, so 1.1 is an increase of 10%
-        // our target is 1.5
         let memberAscResult = ns.gang.getAscensionResult(member) ?? { agi: 0, cha: 0, def: 0, dex: 0, hack: 0, respect: 0, str: 0 };
         // translate relevant task weights to memberAscResult stats
         let relevantAscStatNames = Object.getOwnPropertyNames(memberAscResult).filter(x => subInStringArr(relevantTaskWeightNames, x));
 
-        let ascBln = relevantAscStatNames.every(x => memberAscResult[x] > 1.5)
+        let ascBln = relevantAscStatNames.every(x => memberAscResult[x] > ASCEND_CHECK);
         return ascBln;
     }
 
@@ -134,47 +176,6 @@ export async function main(ns) {
     }
 
     /**
-     * Used to get wanted gain and respect gain for all tasks for a gang member,
-     * which can be useful to determine which task to switch to next
-     * 
-     * @param {String} gangMem gang member's name
-     * @returns list of tasks objects for gang member, and each task's wanted gain and respect gain
-     */
-    function getMemTasksRespWant(gangMem) {
-        let memberTasksList = [];
-        let taskList = ns.gang.getTaskNames();
-        let originalTask = ns.gang.getMemberInformation(gangMem).task;
-        // loop through each task, grabbing respect & wanted for that task
-        for (let i in taskList) {
-            let currentTask = taskList[i];
-            let tasksRespWant = {};
-
-            ns.gang.setMemberTask(gangMem, currentTask);
-            tasksRespWant.taskName = currentTask;
-            tasksRespWant.respectGain = ns.gang.getMemberInformation(gangMem).respectGain;
-            tasksRespWant.wantedGain = ns.gang.getMemberInformation(gangMem).wantedLevelGain;
-            memberTasksList.push(tasksRespWant);
-        }
-        // reset member to original task
-        ns.gang.setMemberTask(gangMem, originalTask);
-
-        return memberTasksList;
-    }
-
-    /**
-     * Determine if gang member should switch to new task, based solely on wanted gain to respect 
-     * gain ratio
-     * 
-     * @param {String} member gang member name
-     * @param {String} newTask task we're checking if we should switch to
-     * @returns true if switching to newTask is advantageous
-     */
-    function shouldSwitchTask(member, newTask) {
-        let taskStats = getMemTasksRespWant(member).filter(task => task.taskName == newTask)[0];
-        return (taskStats.wantedGain / taskStats.respectGain) < 0.01;
-    }
-
-    /**
      * Check if we can recruit a member, if we can, recruit them and assign a name
      */
     function tryRecruit() {
@@ -189,19 +190,26 @@ export async function main(ns) {
 
         ns.gang.getMemberNames().forEach(
             member => {
-                // ascend members
+                // ascend member
                 if (shouldAscend(member)) {
                     ns.gang.ascendMember(member);
                 }
 
-                // assign tasks
+                // assign task
                 assignTask(member);
 
                 // purchase equipment
                 buyGear(member);
             }
         );
-        await ns.sleep(1 * 1e3);
+
+        // switch to warfare for tick
+        // await switchToWarfare();
+
+        // try to turn on Engage in Territory Warfare
+        toggleWar();
+
+        await ns.sleep(25);
     }
 }
 
