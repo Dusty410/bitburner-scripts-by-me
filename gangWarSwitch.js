@@ -2,32 +2,44 @@
 export async function main(ns) {
 
     /**
-     * Get original tasks of members, used to revert change to Territory Warfare later on
+     * Assigns member to a task, only care about train combat, train hack, and human trafficking
      * 
-     * @returns Object where property is member, value is task
+     * @param {string} member 
      */
-    function getOrigTasksObj() {
-        let origTasks = {};
-        ns.gang.getMemberNames().forEach(
-            member => {
-                origTasks[member] = ns.gang.getMemberInformation(member).task;
-            }
-        )
-        return origTasks;
-    }
+     function assignTask(member) {
+        let memberStats = ns.gang.getMemberInformation(member);
 
-    /**
-     * Sets all members tasks using passed task Obj
-     * 
-     * @param {string} tasksObj Property is member, value is task
-     */
-    function setAllTask(tasksObj) {
-        let gangMems = ns.gang.getMemberNames();
-        gangMems.forEach(
-            member => {
-                ns.gang.setMemberTask(member, tasksObj[member]);
-            }
-        )
+        let checkTrnCombat = [];
+        checkTrnCombat.push(memberStats.str_asc_mult < 20);
+        checkTrnCombat.push(memberStats.def_asc_mult < 20);
+        checkTrnCombat.push(memberStats.dex_asc_mult < 20);
+        checkTrnCombat.push(memberStats.agi_asc_mult < 20);
+        checkTrnCombat.push(memberStats.task != 'Train Combat');
+        if (checkTrnCombat.every(x => x)) {
+            ns.gang.setMemberTask(member, 'Train Combat');
+        }
+
+        let checkTrnHack = [];
+        checkTrnHack.push(memberStats.hack_asc_mult < 20);
+        checkTrnHack.push(memberStats.str_asc_mult >= 20);
+        checkTrnHack.push(memberStats.def_asc_mult >= 20);
+        checkTrnHack.push(memberStats.dex_asc_mult >= 20);
+        checkTrnHack.push(memberStats.agi_asc_mult >= 20);
+        checkTrnHack.push(memberStats.task != 'Train Hacking');
+        if (checkTrnHack.every(x => x)) {
+            ns.gang.setMemberTask(member, 'Train Hacking');
+        }
+
+        let checkHumanTraffick = [];
+        checkHumanTraffick.push(memberStats.hack_asc_mult >= 20);
+        checkHumanTraffick.push(memberStats.str_asc_mult >= 20);
+        checkHumanTraffick.push(memberStats.def_asc_mult >= 20);
+        checkHumanTraffick.push(memberStats.dex_asc_mult >= 20);
+        checkHumanTraffick.push(memberStats.agi_asc_mult >= 20);
+        checkHumanTraffick.push(memberStats.task != 'Human Trafficking');
+        if (checkHumanTraffick.every(x => x)) {
+            ns.gang.setMemberTask(member, 'Human Trafficking');
+        }
     }
 
     /**
@@ -36,7 +48,7 @@ export async function main(ns) {
      * 
      * @param {object} origTasks Object of member's original tasks
      */
-    async function switchToWarfare(origTasks) {
+    async function switchToWarfare() {
         let power = ns.gang.getGangInformation().power;
         while (ns.gang.getGangInformation().territory < 1) {
             ns.gang.getMemberNames().forEach(
@@ -50,10 +62,10 @@ export async function main(ns) {
             }
             // tick should happen by this point
             power = ns.gang.getGangInformation().power;
-            // return each member to original task
+            // assign each member to appropriate task
             ns.gang.getMemberNames().forEach(
                 member => {
-                    ns.gang.setMemberTask(member, origTasks[member]);
+                    assignTask(member);
                 }
             )
             await ns.sleep(19.5 * 1e3);
@@ -61,8 +73,5 @@ export async function main(ns) {
         await ns.sleep(25);
     }
 
-    let origTasks = getOrigTasksObj();
-    ns.atExit(() => setAllTask(origTasks));
-
-    await switchToWarfare(origTasks);
+    await switchToWarfare();
 }

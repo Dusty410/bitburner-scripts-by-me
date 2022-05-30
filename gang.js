@@ -131,49 +131,49 @@ export async function main(ns) {
         return ascBln;
     }
 
-    /**
-     * Assigns task to a gang member, only care about train combat, train hack, and human trafficking
-     * 
-     * @param {string} member 
-     */
-    function assignTask(member) {
-        let memberStats = ns.gang.getMemberInformation(member);
+    // /**
+    //  * Assigns task to a gang member, only care about train combat, train hack, and human trafficking
+    //  * 
+    //  * @param {string} member 
+    //  */
+    // function assignTask(member) {
+    //     let memberStats = ns.gang.getMemberInformation(member);
 
-        let checkTrnCombat = [];
-        checkTrnCombat.push(memberStats.str_asc_mult < 20);
-        checkTrnCombat.push(memberStats.def_asc_mult < 20);
-        checkTrnCombat.push(memberStats.dex_asc_mult < 20);
-        checkTrnCombat.push(memberStats.agi_asc_mult < 20);
-        checkTrnCombat.push(memberStats.task != 'Train Combat');
-        checkTrnCombat.push(memberStats.task != 'Territory Warfare');
-        if (checkTrnCombat.every(x => x)) {
-            ns.gang.setMemberTask(member, 'Train Combat');
-        }
+    //     let checkTrnCombat = [];
+    //     checkTrnCombat.push(memberStats.str_asc_mult < 20);
+    //     checkTrnCombat.push(memberStats.def_asc_mult < 20);
+    //     checkTrnCombat.push(memberStats.dex_asc_mult < 20);
+    //     checkTrnCombat.push(memberStats.agi_asc_mult < 20);
+    //     checkTrnCombat.push(memberStats.task != 'Train Combat');
+    //     checkTrnCombat.push(memberStats.task != 'Territory Warfare');
+    //     if (checkTrnCombat.every(x => x)) {
+    //         ns.gang.setMemberTask(member, 'Train Combat');
+    //     }
 
-        let checkTrnHack = [];
-        checkTrnHack.push(memberStats.hack_asc_mult < 20);
-        checkTrnHack.push(memberStats.str_asc_mult >= 20);
-        checkTrnHack.push(memberStats.def_asc_mult >= 20);
-        checkTrnHack.push(memberStats.dex_asc_mult >= 20);
-        checkTrnHack.push(memberStats.agi_asc_mult >= 20);
-        checkTrnHack.push(memberStats.task != 'Train Hacking');
-        checkTrnHack.push(memberStats.task != 'Territory Warfare');
-        if (checkTrnHack.every(x => x)) {
-            ns.gang.setMemberTask(member, 'Train Hacking');
-        }
+    //     let checkTrnHack = [];
+    //     checkTrnHack.push(memberStats.hack_asc_mult < 20);
+    //     checkTrnHack.push(memberStats.str_asc_mult >= 20);
+    //     checkTrnHack.push(memberStats.def_asc_mult >= 20);
+    //     checkTrnHack.push(memberStats.dex_asc_mult >= 20);
+    //     checkTrnHack.push(memberStats.agi_asc_mult >= 20);
+    //     checkTrnHack.push(memberStats.task != 'Train Hacking');
+    //     checkTrnHack.push(memberStats.task != 'Territory Warfare');
+    //     if (checkTrnHack.every(x => x)) {
+    //         ns.gang.setMemberTask(member, 'Train Hacking');
+    //     }
 
-        let checkHumanTraffick = [];
-        checkHumanTraffick.push(memberStats.hack_asc_mult >= 20);
-        checkHumanTraffick.push(memberStats.str_asc_mult >= 20);
-        checkHumanTraffick.push(memberStats.def_asc_mult >= 20);
-        checkHumanTraffick.push(memberStats.dex_asc_mult >= 20);
-        checkHumanTraffick.push(memberStats.agi_asc_mult >= 20);
-        checkHumanTraffick.push(memberStats.task != 'Human Trafficking');
-        checkHumanTraffick.push(memberStats.task != 'Territory Warfare');
-        if (checkHumanTraffick.every(x => x)) {
-            ns.gang.setMemberTask(member, 'Human Trafficking');
-        }
-    }
+    //     let checkHumanTraffick = [];
+    //     checkHumanTraffick.push(memberStats.hack_asc_mult >= 20);
+    //     checkHumanTraffick.push(memberStats.str_asc_mult >= 20);
+    //     checkHumanTraffick.push(memberStats.def_asc_mult >= 20);
+    //     checkHumanTraffick.push(memberStats.dex_asc_mult >= 20);
+    //     checkHumanTraffick.push(memberStats.agi_asc_mult >= 20);
+    //     checkHumanTraffick.push(memberStats.task != 'Human Trafficking');
+    //     checkHumanTraffick.push(memberStats.task != 'Territory Warfare');
+    //     if (checkHumanTraffick.every(x => x)) {
+    //         ns.gang.setMemberTask(member, 'Human Trafficking');
+    //     }
+    // }
 
     /**
      * Check if we can recruit a member, if we can, recruit them and assign a name
@@ -196,7 +196,7 @@ export async function main(ns) {
                 }
 
                 // assign task
-                assignTask(member);
+                // assignTask(member);
 
                 // purchase equipment
                 buyGear(member);
