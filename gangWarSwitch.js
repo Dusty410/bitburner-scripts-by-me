@@ -62,8 +62,7 @@ export async function main(ns) {
     }
 
     let origTasks = getOrigTasksObj();
-
     ns.atExit(() => setAllTask(origTasks));
 
-    await switchToWarfare();
+    await switchToWarfare(origTasks);
 }
