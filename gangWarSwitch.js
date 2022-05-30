@@ -45,8 +45,6 @@ export async function main(ns) {
     /**
      * Switch to Territory Warfare right before tick, then switch back right after tick.
      * This maximizes profit, and points entire gang at Territory Warfare, only when needed
-     * 
-     * @param {object} origTasks Object of member's original tasks
      */
     async function switchToWarfare() {
         let power = ns.gang.getGangInformation().power;
