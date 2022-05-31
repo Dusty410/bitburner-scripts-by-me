@@ -90,8 +90,9 @@ export async function main(ns) {
             }
 
             // buy augs
-            ns.sleeve.getSleevePurchasableAugs(sleeve).forEach(x => ns.sleeve.purchaseSleeveAug(sleeve, x.name));
-
+            if (getShock(sleeve) == 0) {
+                ns.sleeve.getSleevePurchasableAugs(sleeve).forEach(x => ns.sleeve.purchaseSleeveAug(sleeve, x.name));
+            }
         }
         await ns.sleep(25);
     }

@@ -2,7 +2,6 @@
 export async function main(ns) {
     ns.disableLog('ALL');
     ns.clearLog();
-    ns.atExit(deployDroids);
 
     const minDroidTier = 7;
     const droidNumLimit = ns.getPurchasedServerLimit();

@@ -1,4 +1,4 @@
-/** @param {import(".").NS } ns */
+/** @param {import("..").NS } ns */
 export async function main(ns) {
     var server_list = ns.getPurchasedServers(); // only use droids
     server_list.push('home');
