@@ -3,6 +3,7 @@ export async function main(ns) {
     ns.disableLog('sleep');
 
     const ASCEND_CHECK = 1.1;
+    // const ASC_MULT_LIMIT = 15;
 
     // TODO: get switchToWarfare and other functions to run in parallel
 
