@@ -16,14 +16,14 @@ export async function main(ns) {
     const WEAKEN_SCRIPT_RAM = ns.getScriptRam('weaken.js');
     const BATCH_SCRIPT_RAM = ns.getScriptRam('batchv3.js');
     const HOME_SCRIPTS = [
-        'sleeve.js',
+        'singularity.js',
+        'HNSpend.js',
+        'HNUpgrade.js',
         'gang.js',
         'gangWarSwitch.js',
-        'expandDroids.js',
-        'singularity.js',
-        'HNUpgrade.js',
-        'HNSpend.js',
+        'sleeve.js',
         'execBatch.js',
+        'expandDroids.js',
         'bladeburner.js'
     ];
 
