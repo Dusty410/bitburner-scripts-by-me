@@ -1,7 +1,7 @@
 /** @param {import(".").NS } ns */
 export async function main(ns) {
 
-    const ASC_MULT_LIMIT = 15;
+    const ASC_MULT_LIMIT = 20;
 
     /**
      * Assigns member to a task, only care about train combat, train hack, and human trafficking
@@ -16,8 +16,7 @@ export async function main(ns) {
         checkTrnCombat.push(memberStats.def_asc_mult < ASC_MULT_LIMIT);
         checkTrnCombat.push(memberStats.dex_asc_mult < ASC_MULT_LIMIT);
         checkTrnCombat.push(memberStats.agi_asc_mult < ASC_MULT_LIMIT);
-        checkTrnCombat.push(memberStats.task != 'Train Combat');
-        if (checkTrnCombat.every(x => x)) {
+        if (checkTrnCombat.some(x => x) && memberStats.task != 'Train Combat') {
             ns.gang.setMemberTask(member, 'Train Combat');
         }
 

@@ -2,10 +2,51 @@
 export async function main(ns) {
     ns.disableLog('sleep');
 
-    const ASCEND_CHECK = 1.1;
-    // const ASC_MULT_LIMIT = 15;
+    const ASCEND_CHECK = 1.5;
+    const ASC_MULT_LIMIT = 20;
 
     // TODO: get switchToWarfare and other functions to run in parallel
+
+    /**
+     * Assigns member to a task, only care about train combat, train hack, and human trafficking
+     * 
+     * @param {string} member 
+     */
+    function assignTask(member) {
+        let memberStats = ns.gang.getMemberInformation(member);
+
+        let checkTrnCombat = [];
+        checkTrnCombat.push(memberStats.str_asc_mult < ASC_MULT_LIMIT);
+        checkTrnCombat.push(memberStats.def_asc_mult < ASC_MULT_LIMIT);
+        checkTrnCombat.push(memberStats.dex_asc_mult < ASC_MULT_LIMIT);
+        checkTrnCombat.push(memberStats.agi_asc_mult < ASC_MULT_LIMIT);
+        if (checkTrnCombat.some(x => x) && memberStats.task != 'Train Combat') {
+            ns.gang.setMemberTask(member, 'Train Combat');
+        }
+
+        let checkTrnHack = [];
+        checkTrnHack.push(memberStats.hack_asc_mult < ASC_MULT_LIMIT);
+        checkTrnHack.push(memberStats.str_asc_mult >= ASC_MULT_LIMIT);
+        checkTrnHack.push(memberStats.def_asc_mult >= ASC_MULT_LIMIT);
+        checkTrnHack.push(memberStats.dex_asc_mult >= ASC_MULT_LIMIT);
+        checkTrnHack.push(memberStats.agi_asc_mult >= ASC_MULT_LIMIT);
+        checkTrnHack.push(memberStats.task != 'Train Hacking');
+        if (checkTrnHack.every(x => x)) {
+            ns.gang.setMemberTask(member, 'Train Hacking');
+        }
+
+        let checkHumanTraffick = [];
+        checkHumanTraffick.push(memberStats.hack_asc_mult >= ASC_MULT_LIMIT);
+        checkHumanTraffick.push(memberStats.str_asc_mult >= ASC_MULT_LIMIT);
+        checkHumanTraffick.push(memberStats.def_asc_mult >= ASC_MULT_LIMIT);
+        checkHumanTraffick.push(memberStats.dex_asc_mult >= ASC_MULT_LIMIT);
+        checkHumanTraffick.push(memberStats.agi_asc_mult >= ASC_MULT_LIMIT);
+        checkHumanTraffick.push(memberStats.task != 'Human Trafficking');
+        if (checkHumanTraffick.every(x => x)) {
+            ns.gang.setMemberTask(member, 'Human Trafficking');
+        }
+    }
+
 
     /**
      * If chances are good, turn on Engage in Territory Warfare, and if we hae 100% of the
@@ -98,50 +139,6 @@ export async function main(ns) {
         return ascBln;
     }
 
-    // /**
-    //  * Assigns task to a gang member, only care about train combat, train hack, and human trafficking
-    //  * 
-    //  * @param {string} member 
-    //  */
-    // function assignTask(member) {
-    //     let memberStats = ns.gang.getMemberInformation(member);
-
-    //     let checkTrnCombat = [];
-    //     checkTrnCombat.push(memberStats.str_asc_mult < 20);
-    //     checkTrnCombat.push(memberStats.def_asc_mult < 20);
-    //     checkTrnCombat.push(memberStats.dex_asc_mult < 20);
-    //     checkTrnCombat.push(memberStats.agi_asc_mult < 20);
-    //     checkTrnCombat.push(memberStats.task != 'Train Combat');
-    //     checkTrnCombat.push(memberStats.task != 'Territory Warfare');
-    //     if (checkTrnCombat.every(x => x)) {
-    //         ns.gang.setMemberTask(member, 'Train Combat');
-    //     }
-
-    //     let checkTrnHack = [];
-    //     checkTrnHack.push(memberStats.hack_asc_mult < 20);
-    //     checkTrnHack.push(memberStats.str_asc_mult >= 20);
-    //     checkTrnHack.push(memberStats.def_asc_mult >= 20);
-    //     checkTrnHack.push(memberStats.dex_asc_mult >= 20);
-    //     checkTrnHack.push(memberStats.agi_asc_mult >= 20);
-    //     checkTrnHack.push(memberStats.task != 'Train Hacking');
-    //     checkTrnHack.push(memberStats.task != 'Territory Warfare');
-    //     if (checkTrnHack.every(x => x)) {
-    //         ns.gang.setMemberTask(member, 'Train Hacking');
-    //     }
-
-    //     let checkHumanTraffick = [];
-    //     checkHumanTraffick.push(memberStats.hack_asc_mult >= 20);
-    //     checkHumanTraffick.push(memberStats.str_asc_mult >= 20);
-    //     checkHumanTraffick.push(memberStats.def_asc_mult >= 20);
-    //     checkHumanTraffick.push(memberStats.dex_asc_mult >= 20);
-    //     checkHumanTraffick.push(memberStats.agi_asc_mult >= 20);
-    //     checkHumanTraffick.push(memberStats.task != 'Human Trafficking');
-    //     checkHumanTraffick.push(memberStats.task != 'Territory Warfare');
-    //     if (checkHumanTraffick.every(x => x)) {
-    //         ns.gang.setMemberTask(member, 'Human Trafficking');
-    //     }
-    // }
-
     /**
      * Check if we can recruit a member, if we can, recruit them and assign a name
      */
@@ -162,16 +159,15 @@ export async function main(ns) {
                     ns.gang.ascendMember(member);
                 }
 
-                // assign task
-                // assignTask(member);
+                // assign task, only if the gang war script isn't running
+                if (!ns.scriptRunning('gangWarSwitch.js', 'home')) {
+                    assignTask(member);
+                }
 
                 // purchase equipment
                 buyGear(member);
             }
         );
-
-        // switch to warfare for tick
-        // await switchToWarfare();
 
         // try to turn on gang war
         toggleWar();

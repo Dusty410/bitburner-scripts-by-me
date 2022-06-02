@@ -1,54 +1,141 @@
 /** @param {import(".").NS } ns */
 export async function main(ns) {
-    const corpName = 'EJ Dynamics';
-    const agroDiv = 'Agro';
-    const tobacDiv = 'Old Toby';
-    const cities = ['Sector-12', 'Aevum', 'Volhaven', 'Chongqing', 'New Tokyo', 'Ishima'];
-    const jobs = { ops: 'Operations', eng: 'Engineer', bus: 'Business', mgmt: 'Management', rd: 'Research & Development' };
+    /*
+    Agriculture:
+0.5\text{ }Water+0.5\text{ }Energy\Rightarrow 1\text{ }Plants+1\text{ }Food
 
-    function funds() {
-        return ns.corporation.getCorporation().funds;
+Tobacco:
+1\text{ }Plants+0.2\text{ }Water\Rightarrow Products
+
+Software:
+0.5\text{ }Hardware+0.5\text{ }Energy\Rightarrow 1\text{ }AICores+Products
+
+Food:
+0.5\text{ }Food+0.5\text{ }Water+0.2\text{ }Energy\Rightarrow Products
+
+Chemical:
+1\text{ }Plants+0.5\text{ }Energy+0.5\text{ }Water\Rightarrow 1\text{ }Chemicals
+
+Computer:
+2\text{ }Metal+1\text{ }Energy\Rightarrow 1\text{ }Hardware+Products
+
+Energy:
+0.1\text{ }Hardware+0.2\text{ }Metal\Rightarrow 1\text{ }Energy
+
+Fishing:
+0.5\text{ }Energy\Rightarrow 1\text{ }Food
+
+Healthcare:
+10\text{ }Robots+5\text{ }AICores+5\text{ }Energy+5\text{ }Water\Rightarrow Products
+
+Mining:
+0.8\text{ }Energy\Rightarrow 1\text{ }Metal
+
+Real Estate:
+5\text{ }Metal+5\text{ }Energy+2\text{ }Water+4\text{ }Hardware\Rightarrow 1\text{ }RealEstate+Products
+
+Pharmaceutical:
+2\text{ }Chemicals+1\text{ }Energy+0.5\text{ }Water\Rightarrow 1\text{ }Drugs+Products
+
+Robotics:
+5\text{ }Hardware+3\text{ }Energy\Rightarrow 1\text{ }Robots+Products
+
+Utilities:
+0.1\text{ }Hardware+0.1\text{ }Metal\Rightarrow 1\text{ }Water
+*/
+
+    const CORP_NAME = 'EJ Dynamics';
+    const DIV_NAMES = {
+        agro: 'Agro'
+        , tobac: 'Old Toby'
+        , software: 'Broderbund'
+        , food: 'Soylent Blue'
+        , chem: 'Umbrella'
+        , comp: 'Gateway'
+        , energy: 'NRG'
+        , fish: 'Nemo'
+        , health: 'Sacred Heart'
+        , mining: 'Boring Co'
+        , rlEst: 'Laaaaaaand'
+        , pharm: 'Heisenberg'
+        , robot: 'R2D2'
+        , util: 'GCWW'
+    }
+    const CITIES = ['Sector-12', 'Aevum', 'Volhaven', 'Chongqing', 'New Tokyo', 'Ishima'];
+    const JOBS = {
+        ops: 'Operations'
+        , eng: 'Engineer'
+        , bus: 'Business'
+        , mgmt: 'Management'
+        , rd: 'Research & Development'
+    };
+
+    const funds = () => ns.corporation.getCorporation().funds;
+
+    /**
+     * Search if a division with the specified name exists
+     * 
+     * @param {string} divTarget division name to search for
+     * @returns True if div exists
+     */
+    function divExists(divTarget) {
+        // divisions is an array of division objects
+        let divs = ns.corporation.getCorporation().divisions;
+        return divs.some(div => div.name == divTarget);
     }
 
-    function divExists(divName) {
-        var exists = false;
-        var divisions = ns.corporation.getCorporation().divisions;
-        for (let i in divisions) {
-            var division = divisions[i];
-            if (division.name == divName) {
-                exists = true;
+    /**
+     * Expand to all cities in specified division
+     * 
+     * @param {string} div expand cities in this div
+     */
+    function expandToAllCities(div) {
+        CITIES.forEach(
+            city => {
+                if (!ns.corporation.getDivision(div).cities.includes(city)) {
+                    if (funds() >= ns.corporation.getExpandCityCost()) {
+                        ns.corporation.expandCity(div, city);
+                    }
+                }
             }
-        }
-        return exists;
+        );
     }
 
-    function expandToAllCities(division) {
-        for (let i in cities) {
-            var city = cities[i];
-            if (!ns.corporation.getDivision(division).cities.includes(city)) {
-                ns.corporation.expandCity(division, city);
-                ns.corporation.purchaseWarehouse(division, city);
+    /**
+     * Buys warehouse levels in all cities up to the target level in the specified division
+     * 
+     * @param {string} div division name
+     * @param {number} targetLvl target warehouse level
+     */
+    function buyWarehouseAllCities(div, targetLvl) {
+        CITIES.forEach(
+            city => {
+                while (ns.corporation.getWarehouse(div, city).level < targetLvl) {
+                    if (funds() >= ns.corporation.getPurchaseWarehouseCost()) {
+                        ns.corporation.purchaseWarehouse(div, city);
+                    }
+                }
             }
-        }
+        );
     }
 
     function enableSmartSupplyAllCities(division) {
-        for (let i in cities) {
-            var city = cities[i];
+        for (let i in CITIES) {
+            var city = CITIES[i];
             ns.corporation.setSmartSupply(division, city, true);
         }
     }
 
     function upgradeOfficeAllCities(division, newPositions) { // newPositions must be a multiple of 3
-        for (let i in cities) {
-            var city = cities[i];
+        for (let i in CITIES) {
+            var city = CITIES[i];
             ns.corporation.upgradeOfficeSize(division, city, newPositions);
         }
     }
 
     function hireEmployeesAllCities(division, numEmployees) {
-        for (let i in cities) {
-            var city = cities[i];
+        for (let i in CITIES) {
+            var city = CITIES[i];
             for (let j = 0; j < numEmployees; j += 1) {
                 ns.corporation.hireEmployee(division, city);
             }
@@ -56,61 +143,61 @@ export async function main(ns) {
     }
 
     function s1JobAssignments(division) {
-        for (let i in cities) {
-            var city = cities[i];
-            ns.corporation.setAutoJobAssignment(division, city, jobs.ops, 1);
-            ns.corporation.setAutoJobAssignment(division, city, jobs.eng, 1);
-            ns.corporation.setAutoJobAssignment(division, city, jobs.bus, 1);
+        for (let i in CITIES) {
+            var city = CITIES[i];
+            ns.corporation.setAutoJobAssignment(division, city, JOBS.ops, 1);
+            ns.corporation.setAutoJobAssignment(division, city, JOBS.eng, 1);
+            ns.corporation.setAutoJobAssignment(division, city, JOBS.bus, 1);
         }
     }
 
     function s2JobAssignments(division) {
-        for (let i in cities) {
-            var city = cities[i];
-            ns.corporation.setAutoJobAssignment(division, city, jobs.ops, 1);
-            ns.corporation.setAutoJobAssignment(division, city, jobs.eng, 1);
-            ns.corporation.setAutoJobAssignment(division, city, jobs.mgmt, 2);
-            ns.corporation.setAutoJobAssignment(division, city, jobs.rd, 2);
+        for (let i in CITIES) {
+            var city = CITIES[i];
+            ns.corporation.setAutoJobAssignment(division, city, JOBS.ops, 1);
+            ns.corporation.setAutoJobAssignment(division, city, JOBS.eng, 1);
+            ns.corporation.setAutoJobAssignment(division, city, JOBS.mgmt, 2);
+            ns.corporation.setAutoJobAssignment(division, city, JOBS.rd, 2);
         }
     }
 
     function s3JobAssignments(division) {
-        ns.corporation.setAutoJobAssignment(division, 'Aevum', jobs.ops, 4);
-        ns.corporation.setAutoJobAssignment(division, 'Aevum', jobs.eng, 4);
-        ns.corporation.setAutoJobAssignment(division, 'Aevum', jobs.bus, 5);
-        ns.corporation.setAutoJobAssignment(division, 'Aevum', jobs.mgmt, 4);
-        ns.corporation.setAutoJobAssignment(division, 'Aevum', jobs.rd, 4);
+        ns.corporation.setAutoJobAssignment(division, 'Aevum', JOBS.ops, 4);
+        ns.corporation.setAutoJobAssignment(division, 'Aevum', JOBS.eng, 4);
+        ns.corporation.setAutoJobAssignment(division, 'Aevum', JOBS.bus, 5);
+        ns.corporation.setAutoJobAssignment(division, 'Aevum', JOBS.mgmt, 4);
+        ns.corporation.setAutoJobAssignment(division, 'Aevum', JOBS.rd, 4);
     }
 
     function assignJobsAllCities(division, numEmployees) {
-        for (let i in cities) {
-            var city = cities[i];
-            ns.corporation.setAutoJobAssignment(division, city, jobs.ops, numEmployees);
-            ns.corporation.setAutoJobAssignment(division, city, jobs.eng, numEmployees);
-            ns.corporation.setAutoJobAssignment(division, city, jobs.bus, numEmployees);
-            ns.corporation.setAutoJobAssignment(division, city, jobs.mgmt, numEmployees);
-            ns.corporation.setAutoJobAssignment(division, city, jobs.rd, numEmployees);
+        for (let i in CITIES) {
+            var city = CITIES[i];
+            ns.corporation.setAutoJobAssignment(division, city, JOBS.ops, numEmployees);
+            ns.corporation.setAutoJobAssignment(division, city, JOBS.eng, numEmployees);
+            ns.corporation.setAutoJobAssignment(division, city, JOBS.bus, numEmployees);
+            ns.corporation.setAutoJobAssignment(division, city, JOBS.mgmt, numEmployees);
+            ns.corporation.setAutoJobAssignment(division, city, JOBS.rd, numEmployees);
         }
     }
 
     function expandStorageAllCities(division, upgradeCount) {
-        for (let i in cities) {
-            var city = cities[i];
+        for (let i in CITIES) {
+            var city = CITIES[i];
             ns.corporation.upgradeWarehouse(division, city, upgradeCount);
         }
     }
 
     function sellPlantsAndFood(division) {
-        for (let i in cities) {
-            var city = cities[i];
+        for (let i in CITIES) {
+            var city = CITIES[i];
             ns.corporation.sellMaterial(division, city, 'Plants', 'MAX', 'MP');
             ns.corporation.sellMaterial(division, city, 'Food', 'MAX', 'MP');
         }
     }
 
     async function oneTimeBuy(division, shoppingList) {
-        for (let i in cities) {
-            var city = cities[i];
+        for (let i in CITIES) {
+            var city = CITIES[i];
             for (let j in shoppingList) {
                 ns.corporation.buyMaterial(division, city, shoppingList[j][0], shoppingList[j][1]);
                 var materialAmount = 0;
@@ -129,10 +216,10 @@ export async function main(ns) {
      * Pick a name and choose to Expand right out of the gate… you don’t have anything yet,
      * so expansion is how you make your first Agriculture division!
      */
-    ns.corporation.createCorporation(corpName);
-    
-    if (funds() >= ns.corporation.getExpandIndustryCost('Agriculture') && !divExists(agroDiv)) {
-        ns.corporation.expandIndustry('Agriculture', agroDiv);
+    ns.corporation.createCorporation(CORP_NAME);
+
+    if (funds() >= ns.corporation.getExpandIndustryCost('Agriculture') && !divExists(DIV_NAMES.agro)) {
+        ns.corporation.expandIndustry('Agriculture', DIV_NAMES.agro);
     }
 
     /**
@@ -142,20 +229,20 @@ export async function main(ns) {
      * Next, you’ll want to start Expanding to offices in different cities. After buying each,
      * Hire 3 Employees for that office, one in each of the essential positions: Operations, Engineer, and Business.
      */
-    expandToAllCities(agroDiv);
+    expandToAllCities(DIV_NAMES.agro);
     if (funds() > ns.corporation.getUnlockUpgradeCost('Smart Supply')) {
         ns.corporation.unlockUpgrade('Smart Supply');
     }
-    enableSmartSupplyAllCities(agroDiv);
-    hireEmployeesAllCities(agroDiv, 3);
-    s1JobAssignments(agroDiv);
+    enableSmartSupplyAllCities(DIV_NAMES.agro);
+    hireEmployeesAllCities(DIV_NAMES.agro, 3);
+    s1JobAssignments(DIV_NAMES.agro);
 
     /**
      * When you’re spread across the map and staffed, splurge on a single AdVert.Inc
      * purchase to get the word out that you’re in town… all of them. This will
      * increase Awareness and Popularity, which help you sell materials and later, products.
      */
-    ns.corporation.hireAdVert(agroDiv);
+    ns.corporation.hireAdVert(DIV_NAMES.agro);
 
     /**
      * Upgrade each office’s Storage to 300 (two successive upgrades) and start selling
@@ -166,8 +253,8 @@ export async function main(ns) {
      * change to say something like Sell (69.420/MAX) @$3.210k, indicating that you’re selling
      * 69.420 items per second (out of whatever MAX happens to be now), at $3.210k per unit. Great!
      */
-    expandStorageAllCities(agroDiv, 2);
-    sellPlantsAndFood(agroDiv);
+    expandStorageAllCities(DIV_NAMES.agro, 2);
+    sellPlantsAndFood(DIV_NAMES.agro);
 
     /**
      * Time to Grow
@@ -210,7 +297,7 @@ export async function main(ns) {
      */
     ns.corporation.unlockUpgrade('Warehouse API');
     var shoppingList = [['Hardware', 12.5], ['AI Cores', 7.5], ['Real Estate', 2700]];
-    await oneTimeBuy(agroDiv, shoppingList);
+    await oneTimeBuy(DIV_NAMES.agro, shoppingList);
 
     /**
      * When they start, employee Morale, Happiness, and Energy will be fair-to-middlin’, but they’ll
@@ -242,8 +329,8 @@ export async function main(ns) {
     * If everything went according to plan above, you’ve now got about $160b left over. Now it’s time to ratchet this thing up to the peaks!
     */
     upgradeOfficeAllCities(division, 6);
-    hireEmployeesAllCities(agroDiv, 6)
-    s2JobAssignments(agroDiv);
+    hireEmployeesAllCities(DIV_NAMES.agro, 6)
+    s2JobAssignments(DIV_NAMES.agro);
 
     /**
      * Upgrade each of Smart Factories and Smart Storage to level 10 to increase productivity and
@@ -256,7 +343,7 @@ export async function main(ns) {
         ns.corporation.levelUpgrade('Smart Factories');
         ns.corporation.levelUpgrade('Smart Storage');
     }
-    expandStorageAllCities(agroDiv, 7);
+    expandStorageAllCities(DIV_NAMES.agro, 7);
 
     /**
      * We’re gonna do that thing again where we Buy some exact amounts of materials, one tick at a time.
@@ -271,7 +358,7 @@ export async function main(ns) {
      * spoiler alert: we can, and this time it should be about $5t. Nice.
      */
     shoppingList = [['Hardware', 267.5], ['Robots', 9.6], ['AI Cores', 244.5], ['Real Estate', 11940]];
-    await oneTimeBuy(agroDiv, shoppingList);
+    await oneTimeBuy(DIV_NAMES.agro, shoppingList);
     ns.corporation.acceptInvestmentOffer();
 
     /**
@@ -288,9 +375,9 @@ export async function main(ns) {
      * 
      * This should get the Production Multiplier over 500. Neat.
      */
-    expandStorageAllCities(agroDiv, 9);
+    expandStorageAllCities(DIV_NAMES.agro, 9);
     shoppingList = [['Hardware', 650], ['Robots', 63], ['AI Cores', 375], ['Real Estate', 8400]];
-    await oneTimeBuy(agroDiv, shoppingList);
+    await oneTimeBuy(DIV_NAMES.agro, shoppingList);
 
     /**
      * The First Product and Beyond
@@ -303,7 +390,7 @@ export async function main(ns) {
      * Tobacco. It costs $20b to make the expansion, so scoop the corporation’s money
      * into a pile, come up with a snazzy name, and take the plunge.
      */
-    ns.corporation.expandIndustry('Tobacco', tobacDiv);
+    ns.corporation.expandIndustry('Tobacco', DIV_NAMES.tobac);
 
     /**
      * Expand first to Aevum, then to all other cities. In Aevum, Upgrade the Size
@@ -311,17 +398,17 @@ export async function main(ns) {
      * of employee except Training. As you expand to every other branch, keep the
      * same 9 employees in their same roles as before.
      */
-    expandToAllCities(tobacDiv);
-    enableSmartSupplyAllCities(tobacDiv);
-    upgradeOfficeAllCities(tobacDiv, 6);
-    ns.corporation.upgradeOfficeSize(tobacDiv, 'Aevum', 21);
-    hireEmployeesAllCities(tobacDiv, 9);
+    expandToAllCities(DIV_NAMES.tobac);
+    enableSmartSupplyAllCities(DIV_NAMES.tobac);
+    upgradeOfficeAllCities(DIV_NAMES.tobac, 6);
+    ns.corporation.upgradeOfficeSize(DIV_NAMES.tobac, 'Aevum', 21);
+    hireEmployeesAllCities(DIV_NAMES.tobac, 9);
     for (let index = 0; index < 21; index++) {
-        ns.corporation.hireEmployee(tobacDiv, 'Aevum');
+        ns.corporation.hireEmployee(DIV_NAMES.tobac, 'Aevum');
     }
-    s1JobAssignments(tobacDiv);
-    s2JobAssignments(tobacDiv);
-    s3JobAssignments(tobacDiv);
+    s1JobAssignments(DIV_NAMES.tobac);
+    s2JobAssignments(DIV_NAMES.tobac);
+    s3JobAssignments(DIV_NAMES.tobac);
 
     /**
      * When everyone is up and running, pop into the Aevum office and click Create Product.
@@ -333,7 +420,7 @@ export async function main(ns) {
      * be Sector-12 if you don’t expand and set them up first).
      */
     var prod = 0;
-    ns.corporation.makeProduct(tobacDiv, 'Aevum', prod, 1e9, 1e9);
+    ns.corporation.makeProduct(DIV_NAMES.tobac, 'Aevum', prod, 1e9, 1e9);
 
     /**
      * Now we’ll introduce a set of guidelines for continued improvement of the corporation
@@ -354,13 +441,13 @@ export async function main(ns) {
         ns.corporation.levelUpgrade('Nuoptimal Nootropic Injector Implants');
     }
 
-    while (ns.corporation.getProduct(tobacDiv, prod).developmentProgress < 100) {
+    while (ns.corporation.getProduct(DIV_NAMES.tobac, prod).developmentProgress < 100) {
         if (funds() > 3e12) {
             ns.corporation.levelUpgrade('Wilson Analytics');
         }
 
-        if (funds() > ns.corporation.getHireAdVertCost(tobacDiv)) {
-            ns.corporation.hireAdVert(tobacDiv);
+        if (funds() > ns.corporation.getHireAdVertCost(DIV_NAMES.tobac)) {
+            ns.corporation.hireAdVert(DIV_NAMES.tobac);
         }
     }
 
@@ -374,20 +461,20 @@ export async function main(ns) {
      * Your tobacco products will benefit in a huge way from stockpiled research, so each
      * version will be better than the last!
      */
-    ns.corporation.sellProduct(tobacDiv, 'Aevum', prod, 'MAX', 'MP', true);
+    ns.corporation.sellProduct(DIV_NAMES.tobac, 'Aevum', prod, 'MAX', 'MP', true);
 
     for (let i = 0; i < 2; i++) {
-        ns.corporation.makeProduct(tobacDiv, 'Aevum', ++prod, 1e9, 1e9);
-        while (ns.corporation.getProduct(tobacDiv, prod).developmentProgress < 100) {
+        ns.corporation.makeProduct(DIV_NAMES.tobac, 'Aevum', ++prod, 1e9, 1e9);
+        while (ns.corporation.getProduct(DIV_NAMES.tobac, prod).developmentProgress < 100) {
             if (ns.corporation.getCorporation().funds > 3e12) {
                 ns.corporation.levelUpgrade('Wilson Analytics');
             }
 
-            if (ns.corporation.getCorporation().funds > ns.corporation.getHireAdVertCost(tobacDiv)) {
-                ns.corporation.hireAdVert(tobacDiv);
+            if (ns.corporation.getCorporation().funds > ns.corporation.getHireAdVertCost(DIV_NAMES.tobac)) {
+                ns.corporation.hireAdVert(DIV_NAMES.tobac);
             }
         }
-        ns.corporation.sellProduct(tobacDiv, 'Aevum', prod, 'MAX', 'MP', true);
+        ns.corporation.sellProduct(DIV_NAMES.tobac, 'Aevum', prod, 'MAX', 'MP', true);
     }
 
     /**
@@ -399,18 +486,18 @@ export async function main(ns) {
      * so it’s more of a “sprinkles on the sundae” situation.
      */
     var employeesToHire = 30;
-    var numJobs = Object.keys(jobs).length;
+    var numJobs = Object.keys(JOBS).length;
     var jobsPerPosition = employeesToHire / numJobs;
-    ns.corporation.upgradeOfficeSize(tobacDiv, 'Aevum', employeesToHire);
+    ns.corporation.upgradeOfficeSize(DIV_NAMES.tobac, 'Aevum', employeesToHire);
     for (let index = 0; index < employeesToHire; index++) {
-        ns.corporation.hireEmployee(tobacDiv, 'Aevum');
+        ns.corporation.hireEmployee(DIV_NAMES.tobac, 'Aevum');
     }
 
-    ns.corporation.setAutoJobAssignment(tobacDiv, 'Aevum', jobs.ops, jobsPerPosition);
-    ns.corporation.setAutoJobAssignment(tobacDiv, 'Aevum', jobs.eng, jobsPerPosition);
-    ns.corporation.setAutoJobAssignment(tobacDiv, 'Aevum', jobs.bus, jobsPerPosition);
-    ns.corporation.setAutoJobAssignment(tobacDiv, 'Aevum', jobs.mgmt, jobsPerPosition);
-    ns.corporation.setAutoJobAssignment(tobacDiv, 'Aevum', jobs.rd, jobsPerPosition);
+    ns.corporation.setAutoJobAssignment(DIV_NAMES.tobac, 'Aevum', JOBS.ops, jobsPerPosition);
+    ns.corporation.setAutoJobAssignment(DIV_NAMES.tobac, 'Aevum', JOBS.eng, jobsPerPosition);
+    ns.corporation.setAutoJobAssignment(DIV_NAMES.tobac, 'Aevum', JOBS.bus, jobsPerPosition);
+    ns.corporation.setAutoJobAssignment(DIV_NAMES.tobac, 'Aevum', JOBS.mgmt, jobsPerPosition);
+    ns.corporation.setAutoJobAssignment(DIV_NAMES.tobac, 'Aevum', JOBS.rd, jobsPerPosition);
 
     /**
      * When the hiring in Aevum is done and the corp has 3 products, Discontinue the

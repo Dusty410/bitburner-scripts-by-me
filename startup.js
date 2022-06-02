@@ -1,16 +1,24 @@
 /** @param {import(".").NS } ns */
 export async function main(ns) {
-    const STARTUP = [
+    let startup = [
         'singularity.js',
         'HNSpend.js',
         'HNUpgrade.js',
-        'gang.js',
-        'gangWarSwitch.js',
         'sleeve.js',
-        'execBatch.js',
-        'expandDroids.js',
-        'bladeburner.js'
+        'execBatch.js'
     ];
 
-    STARTUP.forEach(x => ns.run(x));
+    if (ns.getPurchasedServerLimit() > 0) {
+        startup.push('expandDroids.js');
+    }
+
+    if (ns.gang.inGang()) {
+        startup = startup.concat(['gang.js', 'gangWarSwitch.js'])
+    }
+
+    if (ns.getPlayer().inBladeburner) {
+        startup.push('bladeburner.js');
+    }
+
+    startup.forEach(x => ns.run(x));
 }

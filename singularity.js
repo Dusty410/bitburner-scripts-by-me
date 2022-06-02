@@ -35,7 +35,8 @@ export async function main(ns) {
             await deploy();
         }
 
-        // TODO: join factions, buy augments
+        // join jobs
+        
 
         // join bladeburner if possible
         if (canJoinBladeburner() && !ns.getPlayer().inBladeburner) {

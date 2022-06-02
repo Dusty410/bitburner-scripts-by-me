@@ -275,10 +275,14 @@ export async function main(ns) {
     for (let i in serverObjList) {
         let current = serverObjList[i];
         // build zombie list
-        if (ns.hasRootAccess(current.name) && ns.getServerMaxRam(current.name) > minRAM) {
+        if (ns.hasRootAccess(current.name)
+            && ns.getServerMaxRam(current.name) > minRAM
+            && !current.name.includes('hacknet')
+            && !current.name.includes('droid')
+        ) {
             zombieList.push(current.name);
         }
-
+        //!current.name.includes('hacknet') && !current.name.includes('droid')
         // build target list
         if (ns.getHackingLevel() >= ns.getServerRequiredHackingLevel(current.name) && ns.getServerMaxMoney(current.name) > 0) {
             targetList.push(current.name);
