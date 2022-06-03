@@ -9,6 +9,12 @@ export async function main(ns) {
     const STORY_SERVERS = ['CSEC', 'avmnite-02h', 'I.I.I.I', 'run4theh111z', 'The-Cave', 'fulcrumassets', 'powerhouse-fitness'];
     const HACK_FILES = ['hackv2.js', 'grow.js', 'weaken.js', 'share.js'];
 
+    /**
+     * Attempts to open ports and nuke the target server
+     * 
+     * @param {string} server target to nuke
+     * @returns whether the nuke attempt was successful
+     */
     function attemptNuke(server) {
         // open ports
         if (ns.fileExists('BruteSSH.exe') && !ns.getServer(server).sshPortOpen) {
@@ -36,41 +42,69 @@ export async function main(ns) {
         return ns.hasRootAccess(server);
     }
 
-    function getServerObj(serverList, serverName) {
-        for (let i in serverList) {
-            let serverObj = serverList[i];
-            if (serverObj.name == serverName) {
+    /**
+     * Finds and returns a single server object using the target name
+     * 
+     * @param {object[]} serverObjList object list of entire server tree
+     * @param {string} target target server name
+     * @returns server object for single server
+     */
+    function getServerObj(serverObjList, target) {
+        for (let i in serverObjList) {
+            let serverObj = serverObjList[i];
+            if (serverObj.name == target) {
                 return serverObj;
             }
         }
     }
 
-    function getParentObj(serverList, serverName) {
+    /**
+     * Finds and returns a server object for the parent of the target server
+     * 
+     * @param {object[]} serverObjList object list of entire server tree
+     * @param {string} target target server name
+     * @returns server object for parent of target
+     */
+    function getParentObj(serverObjList, target) {
         let parentName = '';
 
-        for (let i in serverList) {
-            let serverObj = serverList[i];
-            if (serverObj.name == serverName) {
+        for (let i in serverObjList) {
+            let serverObj = serverObjList[i];
+            if (serverObj.name == target) {
                 parentName = serverObj.parent;
             }
         }
 
-        return getServerObj(serverList, parentName);
+        return getServerObj(serverObjList, parentName);
     }
 
-    function hasYoungerSibling(serverList, serverName) {
-        let parentObj = getParentObj(serverList, serverName);
-        return !(parentObj.children.indexOf(serverName) == parentObj.children.length - 1);
+    /**
+     * Returns true if the target has a younger sibling in the server tree, false otherwise
+     * 
+     * @param {object[]} serverObjList object list of entire server tree
+     * @param {string} target target server name
+     * @returns whether the target has a younger sibling
+     */
+    function hasYoungerSibling(serverObjList, target) {
+        let parentObj = getParentObj(serverObjList, target);
+        return !(parentObj.children.indexOf(target) == parentObj.children.length - 1);
     }
 
-    function drawTree(serverList) {
+    /**
+     * Draws server tree to script log, including:
+     * -server counts
+     * -story server status
+     * 
+     * @param {object[]} serverObjList object list of entire server tree
+     */
+    function drawTree(serverObjList) {
         let depthString = '';
-        for (let i in serverList) {
-            let current = serverList[i];
+        for (let i in serverObjList) {
+            let current = serverObjList[i];
             let serverString = '';
             if (!current.name.includes('hacknet') && !current.name.includes('droid')) {
                 if (current.depth > 0) {
-                    if (hasYoungerSibling(serverList, current.name)) {
+                    if (hasYoungerSibling(serverObjList, current.name)) {
                         serverString += '╞';
                     } else {
                         serverString += '╘';
@@ -113,7 +147,7 @@ export async function main(ns) {
 
                 // only check for siblings if deep enough, ie not on home
                 if (current.depth > 0) {
-                    if (hasYoungerSibling(serverList, current.name) && current.children != null) {
+                    if (hasYoungerSibling(serverObjList, current.name) && current.children != null) {
                         depthString += '│';
                     } else {
                         depthString += ' ';
@@ -125,6 +159,13 @@ export async function main(ns) {
         }
     }
 
+    /**
+     * Get list of server names in order of path to target server
+     * 
+     * @param {object[]} serverObjList object list of entire server tree
+     * @param {string} target target server name
+     * @returns array of server names, in order of path
+     */
     function getPathToServer(serverObjList, target) {
         let serverPath = [];
         let serverObj = getServerObj(serverObjList, target);
@@ -137,6 +178,13 @@ export async function main(ns) {
         return serverPath;
     }
 
+    /**
+     * Get list of server objects with name and path to each target, used mainly for backdooring story servers
+     * 
+     * @param {object[]} serverObjList object list of entire server tree
+     * @param {string[]} targetList list of target servers
+     * @returns array of server objects with name and path to each target
+     */
     function getServerPaths(serverObjList, targetList) {
         let pathsList = [];
         for (let i in targetList) {
@@ -150,28 +198,41 @@ export async function main(ns) {
         return pathsList;
     }
 
+    /**
+     * Connect to any specified server
+     * 
+     * @param {object[]} serverObjList object list of entire server tree
+     * @param {string} target target server name
+     */
     function connectToServer(serverObjList, target) {
         let pathToServer = getPathToServer(serverObjList, target);
         pathToServer.forEach(ns.singularity.connect);
     }
 
-    async function backdoorServerObjList(serverObjList, targetPathsObj) {
+    /**
+     * Backdoors all specified servers in the passed pathsList, used mainly for story servers
+     * 
+     * @param {object[]} serverObjList object list of entire server tree
+     * @param {object[]} pathsObjList list of server objects built from function getServerPaths
+     */
+    async function backdoorServerObjList(serverObjList, pathsObjList) {
         let origin = ns.singularity.getCurrentServer();
         ns.singularity.connect('home');
-        for (let i in targetPathsObj) {
-            let current = targetPathsObj[i];
+        for (let i in pathsObjList) {
+            let current = pathsObjList[i];
             for (let j in current.path) {
                 ns.singularity.connect(current.path[j]);
             }
+            // TODO: move this reporting to script log
             if (ns.getHackingLevel() >= ns.getServerRequiredHackingLevel(current.name)) {
                 if (!ns.getServer(current.name).backdoorInstalled) {
                     await ns.singularity.installBackdoor();
-                    ns.tprint("Installed backdoor on " + current.name);
+                    ns.print("Installed backdoor on " + current.name);
                 } else {
-                    ns.tprint("Backdoor already installed on " + current.name);
+                    ns.print("Backdoor already installed on " + current.name);
                 }
             } else {
-                ns.tprint(
+                ns.print(
                     "Can't backdoor " + current.name +
                     ", need hacking level of " +
                     ns.getServerRequiredHackingLevel(current.name)
@@ -182,6 +243,13 @@ export async function main(ns) {
         connectToServer(serverObjList, origin);
     }
 
+    /**
+     * Recursive function to build entire server tree object list
+     * 
+     * @param {string} server current server
+     * @param {object[]} masterList master list of all server objects
+     * @param {number} depth depth on tree of current server
+     */
     function buildServerTree(server, masterList, depth) {
 
         attemptNuke(server);
@@ -208,7 +276,6 @@ export async function main(ns) {
         if (rootList.length > 0) {
             for (let i in rootList) {
                 let current = rootList[i];
-                // if (!ns.getServer(current).purchasedByPlayer && !current.includes('darkweb')) {
                 if (!current.includes('darkweb')) {
                     childrenList.push(current);
                 }
@@ -228,6 +295,13 @@ export async function main(ns) {
         }
     }
 
+    /**
+     * Returns sorted target list, making sure targets have money available, sorted by
+     * lowest security to highest
+     * 
+     * @param {string[]} targetList original unrefined target list
+     * @returns sorted target list
+     */
     function refineTargets(targetList) {
         let refinedTargets = [];
         let newTargetList = [];
@@ -236,7 +310,7 @@ export async function main(ns) {
             let targetMinSec = ns.getServerMinSecurityLevel(target);
             refinedTargets.push({ server: target, minSec: targetMinSec });
         }
-        refinedTargets.sort(function (a, b) { return a.minSec - b.minSec });
+        refinedTargets.sort((a, b) => a.minSec - b.minSec);
         // create an array of just target names, but now they'll be in order from least security to most
         for (let i in refinedTargets) {
             newTargetList.push(refinedTargets[i].server);
@@ -245,11 +319,15 @@ export async function main(ns) {
         return newTargetList;
     }
 
+    /**
+     * Copies scripts to all purchased servers, hacknet servers, and zombies, which are
+     * servers we control, but don't own
+     * 
+     * @param {string[]} zombieList list of zombies that can run our scripts
+     * @param {string[]} hacknetList list of hacknet servers that can run our scripts
+     */
     async function copyScripts(zombieList, hacknetList) {
-        let serverList = [];
-        serverList = serverList.concat(zombieList);
-        serverList = serverList.concat(hacknetList);
-        serverList = serverList.concat(ns.getPurchasedServers());
+        let serverList = zombieList.concat(hacknetList).concat(ns.getPurchasedServers());
 
         for (let i in serverList) {
             let current = serverList[i];
@@ -257,60 +335,68 @@ export async function main(ns) {
         }
     }
 
+    // this is the comprehensive server tree, built of server objects
     let serverObjList = [];
-    // zombies are nuked servers that we can use to hack other servers
+    // zombies are nuked servers that we can use to hack other servers, with sufficient RAM
     let zombieList = [];
-    // targets are servers that are hackable, with money > 0
+    // targets are servers that are rooted, with money > 0
     let targetList = [];
-    // hacknet servers
+    // hacknet servers with sufficient RAM
     let hacknetList = [];
 
     let minRAM = ns.getScriptRam('hackv2.js') + ns.getScriptRam('grow.js') + (ns.getScriptRam('weaken.js') * 2);
 
     buildServerTree('home', serverObjList, 0);
-    drawTree(serverObjList);
-    let storyPathsObj = getServerPaths(serverObjList, STORY_SERVERS);
-    await backdoorServerObjList(serverObjList, storyPathsObj);
 
-    for (let i in serverObjList) {
-        let current = serverObjList[i];
-        // build zombie list
-        if (ns.hasRootAccess(current.name)
-            && ns.getServerMaxRam(current.name) > minRAM
-            && !current.name.includes('hacknet')
-            && !current.name.includes('droid')
-        ) {
-            zombieList.push(current.name);
-        }
-        //!current.name.includes('hacknet') && !current.name.includes('droid')
-        // build target list
-        if (ns.getHackingLevel() >= ns.getServerRequiredHackingLevel(current.name) && ns.getServerMaxMoney(current.name) > 0) {
-            targetList.push(current.name);
+    while (true) {
+        ns.clearLog();
+        drawTree(serverObjList);
+        let storyPathsObj = getServerPaths(serverObjList, STORY_SERVERS);
+        await backdoorServerObjList(serverObjList, storyPathsObj);
+
+        for (let i in serverObjList) {
+            let current = serverObjList[i];
+            // build zombie list
+            if (ns.hasRootAccess(current.name)
+                && ns.getServerMaxRam(current.name) > minRAM // currently 8GiB minimum
+                && !ns.getServer(current.name).purchasedByPlayer
+            ) {
+                zombieList.push(current.name);
+            }
+            // build target list
+            if (ns.getHackingLevel() >= ns.getServerRequiredHackingLevel(current.name)
+                && ns.getServerMaxMoney(current.name) > 0
+            ) {
+                targetList.push(current.name);
+            }
+            // build hacknet list
+            if (current.name.includes('hacknet')
+                && ns.getServerMaxRam(current.name) > minRAM
+            ) {
+                hacknetList.push(current.name);
+            }
         }
 
-        // build hacknet list
-        if (current.name.includes('hacknet') && ns.getServerMaxRam(current.name) > minRAM) {
-            hacknetList.push(current.name);
-        }
+        // refine targets
+        targetList = refineTargets(targetList);
+
+        // copy scripts
+        await copyScripts(zombieList, hacknetList);
+
+        // report each server count
+        ns.print(
+            '\nZombie count: ' + zombieList.length +
+            '\nDroids count: ' + ns.getPurchasedServers().length +
+            '\nHacknet count: ' + hacknetList.length +
+            '\nTarget count: ' + targetList.length
+        );
+
+        // write all lists to their respective files
+        await ns.write('/text/serverObjects.txt', serverObjList, 'w');
+        await ns.write('/text/zombieList.txt', zombieList, 'w');
+        await ns.write('/text/targetList.txt', targetList, 'w');
+        await ns.write('/text/hacknetList.txt', hacknetList, 'w');
+
+        await ns.sleep(60 * 1e3);
     }
-
-    // refine targets
-    targetList = refineTargets(targetList);
-
-    // copy scripts
-    await copyScripts(zombieList, hacknetList);
-
-    // report each server count
-    ns.tprint(
-        '\nZombie count: ' + zombieList.length +
-        '\nDroids count: ' + ns.getPurchasedServers().length +
-        '\nHacknet count: ' + hacknetList.length +
-        '\nTarget count: ' + targetList.length
-    );
-
-    // write all lists to their respective files
-    await ns.write('/text/serverObjects.txt', serverObjList, 'w');
-    await ns.write('/text/zombieList.txt', zombieList, 'w');
-    await ns.write('/text/targetList.txt', targetList, 'w');
-    await ns.write('/text/hacknetList.txt', hacknetList, 'w');
 }

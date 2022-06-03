@@ -175,6 +175,7 @@ export async function main(ns) {
 
             // work corp jobs to unlock factions
             // TODO: make this actually readable
+            // TODO: fix fulcrumassets vs fulcrum secret technologies name
             let jobCheck = [];
             jobCheck.push(getSync(sleeve) >= 100);
             jobCheck.push(ns.gang.inGang());

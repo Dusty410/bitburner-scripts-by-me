@@ -15,17 +15,18 @@ export async function main(ns) {
     const GROW_SCRIPT_RAM = ns.getScriptRam('grow.js');
     const WEAKEN_SCRIPT_RAM = ns.getScriptRam('weaken.js');
     const BATCH_SCRIPT_RAM = ns.getScriptRam('batchv3.js');
-    const HOME_SCRIPTS = [
-        'singularity.js',
-        'HNSpend.js',
-        'HNUpgrade.js',
-        'gang.js',
-        'gangWarSwitch.js',
-        'sleeve.js',
-        'execBatch.js',
-        'expandDroids.js',
-        'bladeburner.js'
-    ];
+    const HOME_SCRIPTS = ns.read('/text/reservedScripts.txt').split(',');
+    // [
+    //     'singularity.js',
+    //     'HNSpend.js',
+    //     'HNUpgrade.js',
+    //     'gang.js',
+    //     'gangWarSwitch.js',
+    //     'sleeve.js',
+    //     'execBatch.js',
+    //     'expandDroids.js',
+    //     'bladeburner.js'
+    // ];
 
     // arbitrary amount to keep free on home
     const HOME_RAM_KEEP_FREE = 32;
