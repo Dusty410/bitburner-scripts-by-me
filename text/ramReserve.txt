@@ -1,0 +1,1 @@
+'singularity.js','HNSpend.js','HNUpgrade.js','gang.js','gangWarSwitch.js','sleeve.js','execBatch.js','expandDroids.js','bladeburner.js'

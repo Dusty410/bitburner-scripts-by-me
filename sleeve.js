@@ -1,8 +1,73 @@
 /** @param {import(".").NS } ns */
 export async function main(ns) {
-    let getShock = sleeve => ns.sleeve.getSleeveStats(sleeve).shock;
-    let getSync = sleeve => ns.sleeve.getSleeveStats(sleeve).sync;
-    let getCurrentCrime = sleeve => ns.sleeve.getTask(+sleeve).crime;
+    const CORPS = {
+        'MegaCorp': {
+            targetPos: 'software',
+            hack: 250,
+            repForFaction: 200e6,
+            loc: 'Sector-12'
+        },
+        'Four Sigma': {
+            targetPos: 'software',
+            hack: 225,
+            repForFaction: 200e6,
+            loc: 'Sector-12'
+        },
+        'Blade Industries': {
+            targetPos: 'software',
+            hack: 225,
+            repForFaction: 200e6,
+            loc: 'Sector-12'
+        },
+        'ECorp': {
+            targetPos: 'software',
+            hack: 250,
+            repForFaction: 200e6,
+            loc: 'Aevum'
+        },
+        'Bachman & Associates': {
+            targetPos: 'software',
+            hack: 225,
+            repForFaction: 200e6,
+            loc: 'Aevum'
+        },
+        'Clarke Incorporated': {
+            targetPos: 'software',
+            hack: 225,
+            repForFaction: 200e6,
+            loc: 'Aevum'
+        },
+        'Fulcrum Technologies': {
+            targetPos: 'software',
+            hack: 225,
+            repForFaction: 250e6,
+            loc: 'Aevum',
+            backdoor: 'fulcrumassets'
+        },
+        'NWO': {
+            targetPos: 'software',
+            hack: 250,
+            repForFaction: 200e6,
+            loc: 'Volhaven'
+        },
+        'OmniTek Incorporated': {
+            targetPos: 'software',
+            hack: 225,
+            repForFaction: 200e6,
+            loc: 'Volhaven'
+        },
+        'KuaiGong International': {
+            targetPos: 'software',
+            hack: 225,
+            repForFaction: 200e6,
+            loc: 'Chongqing'
+        }
+    }
+
+    const getShock = sleeve => ns.sleeve.getSleeveStats(sleeve).shock;
+    const getSync = sleeve => ns.sleeve.getSleeveStats(sleeve).sync;
+    const getCurrentCrime = sleeve => ns.sleeve.getTask(+sleeve).crime;
+    const getSleeveList = () => [...Array(ns.sleeve.getNumSleeves()).keys()];
 
     /**
      * Get crime success chance as a decimal for a specific crime, for a specific sleeve
@@ -53,23 +118,32 @@ export async function main(ns) {
         let homicideCheck = [];
         homicideCheck.push(getCrimeChance(sleeve, 'Shoplift') >= 1);
         homicideCheck.push(getCrimeChance(sleeve, 'Mug') >= 1);
-        homicideCheck.push(getCrimeChance(sleeve, 'Heist') < 1)
         homicideCheck.push(getCurrentCrime(sleeve) != 'Homicide');
         if (homicideCheck.every(x => x)) {
             ns.sleeve.setToCommitCrime(sleeve, 'Homicide');
         }
-
-        let heistCheck = [];
-        heistCheck.push(getCrimeChance(sleeve, 'Heist') >= 1);
-        heistCheck.push(getCurrentCrime(sleeve) != 'Heist');
-        heistCheck.push(ns.heart.break() <= 54000);
-        if (heistCheck.every(x => x)) {
-            ns.sleeve.setToCommitCrime(sleeve, 'Heist');
-        }
     }
 
-    let sleeveList = [...Array(ns.sleeve.getNumSleeves()).keys()];
+    /**
+     * Gets list of factions that have augments left to buy
+     * 
+     * @returns faction list
+     */
+    function getFactionsWithAugs() {
+        let factions = [];
+        ns.getPlayer().factions.forEach(
+            faction => {
+                let factionAugs = ns.singularity.getAugmentationsFromFaction(faction);
+                if (factionAugs.some(aug => !ns.singularity.getOwnedAugmentations(true).includes(aug))) {
+                    factions.push(faction);
+                }
+            }
+        )
+        return factions;
+    }
+
     while (true) {
+        let sleeveList = getSleeveList();
         for (let i in sleeveList) {
             let sleeve = sleeveList[i];
 
@@ -77,7 +151,6 @@ export async function main(ns) {
             let shockCheck = [];
             shockCheck.push(getShock(sleeve) > 0);
             shockCheck.push(ns.sleeve.getTask(sleeve).task != 'Shock Recovery');
-            shockCheck.push(ns.gang.inGang());
             if (shockCheck.every(x => x)) {
                 ns.sleeve.setToShockRecovery(sleeve);
             }
@@ -91,17 +164,43 @@ export async function main(ns) {
                 ns.sleeve.setToSynchronize(sleeve);
             }
 
-            // set to commit crimes
+            // set to commit crimes, only use them to reach -54000 karma for gang
             let crimeCheck = [];
             crimeCheck.push(getSync(sleeve) >= 100);
-            crimeCheck.push(!ns.gang.inGang() || getShock(sleeve) <= 0);
+            crimeCheck.push(getShock(sleeve) <= 0);
+            crimeCheck.push(!ns.gang.inGang());
             if (crimeCheck.every(x => x)) {
                 assignCrime(sleeve);
             }
 
-            // work jobs
+            // work corp jobs to unlock factions
+            // TODO: make this actually readable
+            let jobCheck = [];
+            jobCheck.push(getSync(sleeve) >= 100);
+            jobCheck.push(ns.gang.inGang());
+            if (jobCheck.every(x => x)) {
+                ns.sleeve.getInformation(sleeve).jobs.forEach(
+                    job => {
+                        if (!ns.getPlayer().factions.includes(job)
+                            && !ns.singularity.checkFactionInvitations().includes(job)
+                            && !sleeveList.map(sleeve => { if (ns.sleeve.getTask(sleeve).task == 'Company') { return ns.sleeve.getTask(sleeve).location } }).includes(job)) {
+                            ns.sleeve.setToCompanyWork(sleeve, job);
+                        }
+                    }
+                )
+            }
 
             // earn faction rep
+            let factionCheck = [];
+            // check to make sure that all corp factions have been unlocked
+            factionCheck.push(ns.sleeve.getInformation(sleeve).jobs.every(
+                job => {
+                    ns.getPlayer().factions.includes(job) || ns.singularity.checkFactionInvitations().includes(job)
+                }
+            ));
+            if (factionCheck.every(x => x)) {
+
+            }
 
             // workout
 
