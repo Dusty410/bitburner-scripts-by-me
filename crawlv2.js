@@ -97,7 +97,7 @@ export async function main(ns) {
      * 
      * @param {object[]} serverObjList object list of entire server tree
      */
-    function drawTree(serverObjList) {
+    async function drawTree(serverObjList) {
         let depthString = '';
         for (let i in serverObjList) {
             let current = serverObjList[i];
@@ -335,22 +335,22 @@ export async function main(ns) {
         }
     }
 
-    // this is the comprehensive server tree, built of server objects
-    let serverObjList = [];
-    // zombies are nuked servers that we can use to hack other servers, with sufficient RAM
-    let zombieList = [];
-    // targets are servers that are rooted, with money > 0
-    let targetList = [];
-    // hacknet servers with sufficient RAM
-    let hacknetList = [];
-
     let minRAM = ns.getScriptRam('hackv2.js') + ns.getScriptRam('grow.js') + (ns.getScriptRam('weaken.js') * 2);
 
+    // this is the comprehensive server tree, built of server objects
+    let serverObjList = [];
     buildServerTree('home', serverObjList, 0);
 
     while (true) {
+        // zombies are nuked servers that we can use to hack other servers, with sufficient RAM
+        let zombieList = [];
+        // targets are servers that are rooted, with money > 0
+        let targetList = [];
+        // hacknet servers with sufficient RAM
+        let hacknetList = [];
+
         ns.clearLog();
-        drawTree(serverObjList);
+        await drawTree(serverObjList);
         let storyPathsObj = getServerPaths(serverObjList, STORY_SERVERS);
         await backdoorServerObjList(serverObjList, storyPathsObj);
 

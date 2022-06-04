@@ -1,4 +1,4 @@
 /** @param {import(".").NS } ns */
 export async function main(ns) {
-    ns.tprint(ns.getPurchasedServers());
+    ns.tprint(ns.heart.break());
 }
