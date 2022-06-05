@@ -4,6 +4,7 @@ export async function main(ns) {
 
     const ASCEND_CHECK = 1.5;
     const ASC_MULT_LIMIT = 20;
+    const STAT_LIMIT = 700;
 
     // TODO: get switchToWarfare and other functions to run in parallel
 
@@ -16,23 +17,33 @@ export async function main(ns) {
         let memberStats = ns.gang.getMemberInformation(member);
 
         let checkTrnCombat = [];
-        checkTrnCombat.push(memberStats.str_asc_mult < ASC_MULT_LIMIT);
-        checkTrnCombat.push(memberStats.def_asc_mult < ASC_MULT_LIMIT);
-        checkTrnCombat.push(memberStats.dex_asc_mult < ASC_MULT_LIMIT);
-        checkTrnCombat.push(memberStats.agi_asc_mult < ASC_MULT_LIMIT);
+        checkTrnCombat.push(memberStats.str < STAT_LIMIT);
+        checkTrnCombat.push(memberStats.def < STAT_LIMIT);
+        checkTrnCombat.push(memberStats.dex < STAT_LIMIT);
+        // checkTrnCombat.push(memberStats.agi < STAT_LIMIT);
         if (checkTrnCombat.some(x => x) && memberStats.task != 'Train Combat') {
             ns.gang.setMemberTask(member, 'Train Combat');
         }
 
         let checkTrnHack = [];
-        checkTrnHack.push(memberStats.hack_asc_mult < ASC_MULT_LIMIT);
-        checkTrnHack.push(memberStats.str_asc_mult >= ASC_MULT_LIMIT);
-        checkTrnHack.push(memberStats.def_asc_mult >= ASC_MULT_LIMIT);
-        checkTrnHack.push(memberStats.dex_asc_mult >= ASC_MULT_LIMIT);
-        checkTrnHack.push(memberStats.agi_asc_mult >= ASC_MULT_LIMIT);
+        checkTrnHack.push(memberStats.hack < STAT_LIMIT);
+        checkTrnHack.push(memberStats.str >= STAT_LIMIT);
+        checkTrnHack.push(memberStats.def >= STAT_LIMIT);
+        checkTrnHack.push(memberStats.dex >= STAT_LIMIT);
+        // checkTrnHack.push(memberStats.agi >= STAT_LIMIT);
         checkTrnHack.push(memberStats.task != 'Train Hacking');
         if (checkTrnHack.every(x => x)) {
             ns.gang.setMemberTask(member, 'Train Hacking');
+        }
+
+        let checkTerrorism = [];
+        checkTerrorism.push(memberStats.hack >= STAT_LIMIT);
+        checkTerrorism.push(memberStats.str >= STAT_LIMIT);
+        checkTerrorism.push(memberStats.def >= STAT_LIMIT);
+        checkTerrorism.push(memberStats.dex >= STAT_LIMIT);
+        checkTerrorism.push(memberStats.task != 'Terrorism');
+        if (checkTerrorism.every(x => x)) {
+            ns.gang.setMemberTask(member, 'Terrorism');
         }
 
         let checkHumanTraffick = [];
@@ -40,7 +51,7 @@ export async function main(ns) {
         checkHumanTraffick.push(memberStats.str_asc_mult >= ASC_MULT_LIMIT);
         checkHumanTraffick.push(memberStats.def_asc_mult >= ASC_MULT_LIMIT);
         checkHumanTraffick.push(memberStats.dex_asc_mult >= ASC_MULT_LIMIT);
-        checkHumanTraffick.push(memberStats.agi_asc_mult >= ASC_MULT_LIMIT);
+        // checkHumanTraffick.push(memberStats.agi_asc_mult >= ASC_MULT_LIMIT);
         checkHumanTraffick.push(memberStats.task != 'Human Trafficking');
         if (checkHumanTraffick.every(x => x)) {
             ns.gang.setMemberTask(member, 'Human Trafficking');

@@ -125,6 +125,35 @@ export async function main(ns) {
     }
 
     /**
+     * Assign a sleeve to appropriate job
+     * 
+     * @param {string} sleeve sleeve name 
+     */
+    function assignJob(sleeve) {
+        let jobsForSleeve = ns.sleeve.getInformation(sleeve).jobs;
+        for (let i in jobsForSleeve) {
+            let job = jobsForSleeve[i];
+            // Fulcrum check, job name is different from 
+            job = job == 'Fulcrum Technologies' ? 'Fulcrum Secret Technologies' : job;
+            let jobFactionNotJoined = !ns.getPlayer().factions.includes(job);
+            let jobFactionNotInvite = !ns.singularity.checkFactionInvitations().includes(job);
+            let otherActiveSlvJobs = sleeveList.map(sleeve => {
+                if (ns.sleeve.getTask(sleeve).task == 'Company') {
+                    return ns.sleeve.getTask(sleeve).location;
+                }
+            });
+            let otherSleeveWorkingJob = !otherActiveSlvJobs.includes(job);
+
+            if (jobFactionNotJoined
+                && jobFactionNotInvite
+                && otherSleeveWorkingJob
+            ) {
+                ns.sleeve.setToCompanyWork(sleeve, job);
+            }
+        }
+    }
+
+    /**
      * Gets list of factions that have augments left to buy
      * 
      * @returns faction list
@@ -174,24 +203,14 @@ export async function main(ns) {
             }
 
             // work corp jobs to unlock factions
-            // TODO: make this actually readable
-            // TODO: fix fulcrumassets vs fulcrum secret technologies name
             let jobCheck = [];
             jobCheck.push(getSync(sleeve) >= 100);
             jobCheck.push(ns.gang.inGang());
             if (jobCheck.every(x => x)) {
-                ns.sleeve.getInformation(sleeve).jobs.forEach(
-                    job => {
-                        if (!ns.getPlayer().factions.includes(job)
-                            && !ns.singularity.checkFactionInvitations().includes(job)
-                            && !sleeveList.map(sleeve => { if (ns.sleeve.getTask(sleeve).task == 'Company') { return ns.sleeve.getTask(sleeve).location } }).includes(job)) {
-                            ns.sleeve.setToCompanyWork(sleeve, job);
-                        }
-                    }
-                )
+                assignJob(sleeve);
             }
 
-            // earn faction rep
+            // earn faction rep, only care about factions with augs, and donations not unlocked
             let factionCheck = [];
             // check to make sure that all corp factions have been unlocked
             factionCheck.push(ns.sleeve.getInformation(sleeve).jobs.every(
