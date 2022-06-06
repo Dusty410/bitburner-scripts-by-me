@@ -258,7 +258,7 @@ export async function main(ns) {
             }
         }
     }
-    
+
     /**
      * Recursive function to build entire server tree object list
      * 
@@ -388,12 +388,23 @@ export async function main(ns) {
                 targetList.push(current.name);
             }
             // build hacknet list
-            if (current.name.includes('hacknet')
-                && ns.getServerMaxRam(current.name) > minRAM
-            ) {
-                hacknetList.push(current.name);
-            }
+            // if (current.name.includes('hacknet')
+            //     && ns.getServerMaxRam(current.name) > minRAM
+            // ) {
+            //     hacknetList.push(current.name);
+            // }
         }
+
+        // build hacknet lists
+        ns.scan('home').forEach(
+            server => {
+                if (server.includes('hacknet')
+                    && ns.getServerMaxRam(server) > minRAM
+                ) {
+                    hacknetList.push(server);
+                }
+            }
+        )
 
         // refine targets
         targetList = refineTargets(targetList);
@@ -415,6 +426,6 @@ export async function main(ns) {
         await ns.write('/text/targetList.txt', targetList, 'w');
         await ns.write('/text/hacknetList.txt', hacknetList, 'w');
 
-        await ns.sleep(60 * 1e3);
+        await ns.sleep(5 * 1e3);
     }
 }

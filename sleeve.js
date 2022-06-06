@@ -131,7 +131,7 @@ export async function main(ns) {
      * @param {number} sleeve sleeve name 
      */
     function assignJob(sleeve) {
-        let jobsForSleeve = ns.sleeve.getInformation(sleeve).jobs;
+        let jobsForSleeve = getSleeveJobs(sleeve);
         let sleeveList = getSleeveList();
         for (let i in jobsForSleeve) {
             let job = jobsForSleeve[i];
@@ -208,6 +208,31 @@ export async function main(ns) {
     }
 
     /**
+     * Determines if donations are unlocked, or could be after the next aug install
+     * 
+     * @param {string} faction faction name 
+     * @returns true if donations are unlocked, or could be on the next reset
+     */
+    function donationsPossible(faction) {
+        let currentFavor = ns.singularity.getFactionFavor(faction);
+        let futureFavor = ns.singularity.getFactionFavorGain(faction);
+        let favorToDonate = ns.getFavorToDonate(faction);
+
+        return (currentFavor + futureFavor) >= favorToDonate;
+    }
+
+    /**
+     * Check if all donations have been unlocked, or could be after next aug install, for factions
+     * that we have currently joined
+     * 
+     * @returns true if all donations unlocked
+     */
+    function allDonationsUnlocked() {
+        let facDonUnlocked = ns.getPlayer().factions.map(donationsPossible).every(x => x);
+        return facDonUnlocked;
+    }
+
+    /**
      * Assign a sleeve to a faction, based on augmentations left, and donations unlocked
      * 
      * @param {number} sleeve sleeve name
@@ -217,7 +242,7 @@ export async function main(ns) {
         for (let i in factionList) {
             let currentFac = factionList[i];
             // skip if donations are unlocked
-            if (ns.singularity.getFactionFavor(currentFac) < ns.getFavorToDonate(currentFac)) {
+            if (!donationsPossible(currentFac)) {
                 let otherSleeveFacs = getSleeveList().map(
                     slv => {
                         if (ns.sleeve.getTask(slv).task == 'Faction') {
@@ -228,12 +253,15 @@ export async function main(ns) {
 
                 if (!otherSleeveFacs.includes(currentFac)) {
                     ns.sleeve.setToFactionWork(sleeve, currentFac, 'Field')
-                    || ns.sleeve.setToFactionWork(sleeve, currentFac, 'Security')
-                    || ns.sleeve.setToFactionWork(sleeve, currentFac, 'Hacking')
+                        || ns.sleeve.setToFactionWork(sleeve, currentFac, 'Security')
+                        || ns.sleeve.setToFactionWork(sleeve, currentFac, 'Hacking')
                 }
             }
         }
+    }
 
+    function assignWorkout(sleeve) {
+        
     }
 
     // main loop
@@ -295,9 +323,12 @@ export async function main(ns) {
             }
 
             // workout
-
-            // attend university
-
+            let workoutCheck = [];
+            workoutCheck.push(allDonationsUnlocked());
+            if (workoutCheck.every(x => x)) {
+                
+            }
+            
             // bladeburner actions
 
             // buy augs

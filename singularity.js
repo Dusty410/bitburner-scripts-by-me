@@ -229,15 +229,6 @@ export async function main(ns) {
     }
 
     /**
-     * Kill running hack batches, then restart them
-     */
-    async function deploy() {
-        ns.run('killswitch.js');
-        await ns.sleep(1 * 1e3);
-        ns.run('execBatch.js');
-    }
-
-    /**
      * Check if we can join the Bladeburner div
      * 
      * @returns True if we can join Bladeburner div
@@ -307,14 +298,10 @@ export async function main(ns) {
         // check if we can afford a home memory or core upgrade
         if (ns.getPlayer().money > ns.singularity.getUpgradeHomeRamCost()) {
             ns.singularity.upgradeHomeRam();
-            // await deploy();
         }
         if (ns.getPlayer().money > ns.singularity.getUpgradeHomeCoresCost()) {
             ns.singularity.upgradeHomeCores();
-            // await deploy();
         }
-
-        // read server files, if significant change, then deploy
 
         // apply for corp jobs
         applyToJobs();
@@ -326,6 +313,8 @@ export async function main(ns) {
         if (canJoinBladeburner() && !ns.getPlayer().inBladeburner) {
             ns.bladeburner.joinBladeburnerDivision();
         }
+
+        // buy augs
 
         await ns.sleep(1 * 1e3);
     }

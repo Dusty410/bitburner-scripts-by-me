@@ -19,9 +19,16 @@ export async function main(ns) {
         startup.push('crime.js')
     }
 
-    if (ns.getPlayer().inBladeburner) {
+    if (ns.getPlayer().inBladeburner
+        && ns.gang.inGang()) {
         startup.push('bladeburner.js');
     }
+
+    // if home RAM is greater than 1 TiB, start corp script
+    if (ns.getServerMaxRam('home') > 2 ** 10) {
+        startup.push('corporation.js');
+    }
+
     let RAMNeeded = startup.map(x => ns.getScriptRam(x)).reduce((a, b) => a + b) + ns.getScriptRam('startup.js');
     ns.tprint('RAM needed for startup scripts: ' + RAMNeeded);
     ns.tprint('Total RAM on home server: ' + ns.getServerMaxRam('home'));
