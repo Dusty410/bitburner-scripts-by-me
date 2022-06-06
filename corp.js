@@ -46,28 +46,28 @@ Utilities:
 
     const CORP_NAME = 'EJ Dynamics';
     const DIV_NAMES = {
-        agro: 'Agro'
-        , tobac: 'Old Toby'
-        , software: 'Broderbund'
-        , food: 'Soylent Blue'
-        , chem: 'Umbrella'
-        , comp: 'Gateway'
-        , energy: 'NRG'
-        , fish: 'Nemo'
-        , health: 'Sacred Heart'
-        , mining: 'Boring Co'
-        , rlEst: 'Laaaaaaand'
-        , pharm: 'Heisenberg'
-        , robot: 'R2D2'
-        , util: 'GCWW'
+        agro: 'Agro',
+        tobac: 'Old Toby',
+        software: 'Broderbund',
+        food: 'Soylent Blue',
+        chem: 'ChemCo',
+        comp: 'Hello, Computer',
+        energy: 'NRG',
+        fish: 'Nemo',
+        health: 'Sacred Heart',
+        mining: 'Mineco',
+        rlEst: 'Laaaaaaand',
+        pharm: 'PharmaBros',
+        robot: 'R2D2',
+        util: 'util'
     }
     const CITIES = ['Sector-12', 'Aevum', 'Volhaven', 'Chongqing', 'New Tokyo', 'Ishima'];
     const JOBS = {
-        ops: 'Operations'
-        , eng: 'Engineer'
-        , bus: 'Business'
-        , mgmt: 'Management'
-        , rd: 'Research & Development'
+        ops: 'Operations',
+        eng: 'Engineer',
+        bus: 'Business',
+        mgmt: 'Management',
+        rd: 'Research & Development'
     };
 
     const funds = () => ns.corporation.getCorporation().funds;
@@ -216,7 +216,12 @@ Utilities:
      * Pick a name and choose to Expand right out of the gate… you don’t have anything yet,
      * so expansion is how you make your first Agriculture division!
      */
-    ns.corporation.createCorporation(CORP_NAME);
+    if (ns.getServerMaxRam('home') > 2 ** 10
+        && (ns.getPlayer().bitNodeN == 3 || ns.getPlayer().money > 150e9)
+        // && ns.corporation.getCorporation().
+    ) {
+        ns.corporation.createCorporation(CORP_NAME, !ns.getPlayer().bitNodeN == 3);
+    }
 
     if (funds() >= ns.corporation.getExpandIndustryCost('Agriculture') && !divExists(DIV_NAMES.agro)) {
         ns.corporation.expandIndustry('Agriculture', DIV_NAMES.agro);

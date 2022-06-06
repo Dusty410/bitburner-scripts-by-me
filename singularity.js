@@ -316,6 +316,8 @@ export async function main(ns) {
 
         // buy augs
 
+        // install augs
+
         await ns.sleep(1 * 1e3);
     }
 }

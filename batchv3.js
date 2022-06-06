@@ -54,9 +54,11 @@ export async function main(ns) {
         let numWknRnds = Math.ceil(initWknThrIdl / initWknThrLmt);
         let initWknThr = Math.min(initWknThrIdl, initWknThrLmt);
 
-        for (let i = 0; i < numWknRnds; i++) {
-            ns.exec('weaken.js', server, initWknThr, target, 0, Math.random());
-            await ns.sleep(ns.getWeakenTime(target) + STAGGER);
+        if (initWknThr >= 1) {
+            for (let i = 0; i < numWknRnds; i++) {
+                ns.exec('weaken.js', server, initWknThr, target, 0, Math.random());
+                await ns.sleep(ns.getWeakenTime(target) + STAGGER);
+            }
         }
     }
 
@@ -97,9 +99,10 @@ export async function main(ns) {
 
                 initGrowThrLmt++;
             }
-
-            ns.exec('weaken.js', server, initWknGrowThrLmt, target, 0, Math.random());
-            ns.exec('grow.js', server, initGrowThrLmt, target, (initWknTime - initGrowTime - STAGGER), Math.random());
+            if (initWknGrowThrLmt >= 1) {
+                ns.exec('weaken.js', server, initWknGrowThrLmt, target, 0, Math.random());
+                ns.exec('grow.js', server, initGrowThrLmt, target, (initWknTime - initGrowTime - STAGGER), Math.random());
+            }
             await ns.sleep(initWknTime + STAGGER);
         } else {
             ns.exec('weaken.js', server, initWknGrowThrIdl, target, 0, Math.random());
@@ -167,7 +170,12 @@ export async function main(ns) {
     // 1st arg is target
     // 2nd arg is sleep time
     // 3rd is random number to get unique process id
-    if (numBatches >= 1) {
+    if (numBatches >= 1
+        && weakenHackThreads >= 1
+        && weakenGrowThreads >= 1
+        && growThreads >= 1
+        && hackThreads >= 1
+    ) {
         while (true) {
             for (let i = 0; i < numBatches; i++) {
                 // get time in ms to hack server

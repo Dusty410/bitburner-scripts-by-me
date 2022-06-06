@@ -5,8 +5,6 @@ export async function main(ns) {
     const ASCEND_CHECK = 1.5;
     const ASC_MULT_LIMIT = 20;
 
-    // TODO: get switchToWarfare and other functions to run in parallel
-
     /**
      * Assigns member to a task, only care about train combat, train hack, and human trafficking
      * 
