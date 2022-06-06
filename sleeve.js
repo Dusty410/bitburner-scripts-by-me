@@ -68,12 +68,13 @@ export async function main(ns) {
     const getSync = sleeve => ns.sleeve.getSleeveStats(sleeve).sync;
     const getCurrentCrime = sleeve => ns.sleeve.getTask(+sleeve).crime;
     const getSleeveList = () => [...Array(ns.sleeve.getNumSleeves()).keys()];
+    const getSleeveJobs = (sleeve) => ns.sleeve.getInformation(sleeve).jobs;
 
     /**
      * Get crime success chance as a decimal for a specific crime, for a specific sleeve
      * Formula: https://gist.github.com/jeek/48715d9cbc59da2da33b00b954605bd6 line 1938
      * 
-     * @param {string} sleeve 
+     * @param {number} sleeve 
      * @param {string} crime 
      * @returns decimal chance of success for specified sleeve & crime, 1 is 100%
      */
@@ -97,7 +98,7 @@ export async function main(ns) {
     /**
      * Assign sleeve to appropriate crime
      * 
-     * @param {string} sleeve Sleeve name
+     * @param {number} sleeve Sleeve name
      */
     function assignCrime(sleeve) {
         let shopliftCheck = [];
@@ -125,28 +126,34 @@ export async function main(ns) {
     }
 
     /**
-     * Assign a sleeve to appropriate job
+     * Assign a sleeve to appropriate corp job
      * 
-     * @param {string} sleeve sleeve name 
+     * @param {number} sleeve sleeve name 
      */
     function assignJob(sleeve) {
         let jobsForSleeve = ns.sleeve.getInformation(sleeve).jobs;
+        let sleeveList = getSleeveList();
         for (let i in jobsForSleeve) {
             let job = jobsForSleeve[i];
-            // Fulcrum check, job name is different from 
-            job = job == 'Fulcrum Technologies' ? 'Fulcrum Secret Technologies' : job;
-            let jobFactionNotJoined = !ns.getPlayer().factions.includes(job);
-            let jobFactionNotInvite = !ns.singularity.checkFactionInvitations().includes(job);
+            // check if the company has a faction i haven't joined yet
+            let jobFactionNotJoined = !ns.getPlayer().factions.includes(
+                job == 'Fulcrum Technologies' ? 'Fulcrum Secret Technologies' : job
+            );
+            // check if the company has a pending invite
+            let jobFactionNotInvite = !ns.singularity.checkFactionInvitations().includes(
+                job == 'Fulcrum Technologies' ? 'Fulcrum Secret Technologies' : job
+            );
             let otherActiveSlvJobs = sleeveList.map(sleeve => {
                 if (ns.sleeve.getTask(sleeve).task == 'Company') {
                     return ns.sleeve.getTask(sleeve).location;
                 }
             });
-            let otherSleeveWorkingJob = !otherActiveSlvJobs.includes(job);
+            // make sure other sleeves aren't working the same job
+            let otherSlvNotWorkingJob = !otherActiveSlvJobs.includes(job);
 
             if (jobFactionNotJoined
                 && jobFactionNotInvite
-                && otherSleeveWorkingJob
+                && otherSlvNotWorkingJob
             ) {
                 ns.sleeve.setToCompanyWork(sleeve, job);
             }
@@ -171,6 +178,65 @@ export async function main(ns) {
         return factions;
     }
 
+    /**
+     * Assign a sleeve to the algorithms course at ZB Univ in Volhaven
+     * 
+     * @param {number} sleeve 
+     */
+    function assignUniv(sleeve) {
+        let slvLoc = ns.sleeve.getInformation(sleeve).city;
+        if (slvLoc != 'Volhaven') {
+            ns.sleeve.travel(sleeve, 'Volhaven');
+        }
+        if (ns.sleeve.getTask(sleeve).className != 'Algorithms') {
+            ns.sleeve.setToUniversityCourse(sleeve, 'ZB Institute of Technology', 'Algorithms');
+        }
+    }
+
+    /**
+     * Returns true if all corp jobs have had their related factions unlocked
+     * 
+     * @returns true if all corp jobs done
+     */
+    function allCorpJobsDone() {
+        return Object.getOwnPropertyNames(CORPS).every(
+            job => {
+                job = job == 'Fulcrum Technologies' ? 'Fulcrum Secret Technologies' : job;
+                return ns.getPlayer().factions.includes(job) || ns.singularity.checkFactionInvitations().includes(job);
+            }
+        )
+    }
+
+    /**
+     * Assign a sleeve to a faction, based on augmentations left, and donations unlocked
+     * 
+     * @param {number} sleeve sleeve name
+     */
+    function assignFaction(sleeve) {
+        let factionList = getFactionsWithAugs();
+        for (let i in factionList) {
+            let currentFac = factionList[i];
+            // skip if donations are unlocked
+            if (ns.singularity.getFactionFavor(currentFac) < ns.getFavorToDonate(currentFac)) {
+                let otherSleeveFacs = getSleeveList().map(
+                    slv => {
+                        if (ns.sleeve.getTask(slv).task == 'Faction') {
+                            return ns.sleeve.getTask(slv).location;
+                        }
+                    }
+                );
+
+                if (!otherSleeveFacs.includes(currentFac)) {
+                    ns.sleeve.setToFactionWork(sleeve, currentFac, 'Field')
+                    || ns.sleeve.setToFactionWork(sleeve, currentFac, 'Security')
+                    || ns.sleeve.setToFactionWork(sleeve, currentFac, 'Hacking')
+                }
+            }
+        }
+
+    }
+
+    // main loop
     while (true) {
         let sleeveList = getSleeveList();
         for (let i in sleeveList) {
@@ -202,10 +268,20 @@ export async function main(ns) {
                 assignCrime(sleeve);
             }
 
+            // attend university, only up to hack 250
+            let firstUniCheck = [];
+            firstUniCheck.push(getSync(sleeve) >= 100);
+            firstUniCheck.push(ns.gang.inGang());
+            firstUniCheck.push(ns.getPlayer().hacking < 250);
+            if (firstUniCheck.every(x => x)) {
+                assignUniv(sleeve);
+            }
+
             // work corp jobs to unlock factions
             let jobCheck = [];
             jobCheck.push(getSync(sleeve) >= 100);
             jobCheck.push(ns.gang.inGang());
+            jobCheck.push(ns.getPlayer().hacking >= 250);
             if (jobCheck.every(x => x)) {
                 assignJob(sleeve);
             }
@@ -213,13 +289,9 @@ export async function main(ns) {
             // earn faction rep, only care about factions with augs, and donations not unlocked
             let factionCheck = [];
             // check to make sure that all corp factions have been unlocked
-            factionCheck.push(ns.sleeve.getInformation(sleeve).jobs.every(
-                job => {
-                    ns.getPlayer().factions.includes(job) || ns.singularity.checkFactionInvitations().includes(job)
-                }
-            ));
+            factionCheck.push(allCorpJobsDone());
             if (factionCheck.every(x => x)) {
-
+                assignFaction(sleeve);
             }
 
             // workout

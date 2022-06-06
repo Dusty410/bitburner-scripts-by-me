@@ -224,7 +224,9 @@ export async function main(ns) {
                 ns.singularity.connect(current.path[j]);
             }
             // TODO: move this reporting to script log
-            if (ns.getHackingLevel() >= ns.getServerRequiredHackingLevel(current.name)) {
+            if (ns.getHackingLevel() >= ns.getServerRequiredHackingLevel(current.name)
+                && ns.hasRootAccess(current.name)
+            ) {
                 if (!ns.getServer(current.name).backdoorInstalled) {
                     await ns.singularity.installBackdoor();
                     ns.print("Installed backdoor on " + current.name);
@@ -244,6 +246,20 @@ export async function main(ns) {
     }
 
     /**
+     * Attempt to nuke all servers in the provided obj list
+     * 
+     * @param {object[]} serverObjList entire server tree
+     */
+    function attemptNukeAll(serverObjList) {
+        for (let i in serverObjList) {
+            let server = serverObjList[i];
+            if (!ns.hasRootAccess(server.name)) {
+                attemptNuke(server.name);
+            }
+        }
+    }
+    
+    /**
      * Recursive function to build entire server tree object list
      * 
      * @param {string} server current server
@@ -252,7 +268,7 @@ export async function main(ns) {
      */
     function buildServerTree(server, masterList, depth) {
 
-        attemptNuke(server);
+        // attemptNuke(server);
 
         let rootList = ns.scan(server);
         let serverObj = {};
@@ -348,6 +364,8 @@ export async function main(ns) {
         let targetList = [];
         // hacknet servers with sufficient RAM
         let hacknetList = [];
+
+        attemptNukeAll(serverObjList);
 
         ns.clearLog();
         await drawTree(serverObjList);
