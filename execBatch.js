@@ -3,6 +3,9 @@ export async function main(ns) {
     // TODO: add logic to search for servers that have room to run attacks on further targets
     // TODO: have server report num of running scripts to a port, have execBatch read port and assign appropriately
 
+    ns.disableLog('sleep');
+    // ns.tail();
+
     /**
      * Gets list of hacknet servers
      * 
@@ -24,7 +27,9 @@ export async function main(ns) {
     function buildServerList() {
         let droidsList = ns.getPurchasedServers();
         let hacknetList = getHacknetList();
-        return droidsList.concat(hacknetList).unshift('home');
+        let serverList = droidsList.concat(hacknetList);
+        serverList.unshift('home');
+        return serverList;
     }
 
     /**
@@ -88,13 +93,16 @@ export async function main(ns) {
      * @param {string[]} serverList list of servers to run batch scripts
      * @param {string[]} targetList list of servers to target and hack
      */
-    function deploy(serverList, targetList) {
-        let iterList;
-        if (serverList.length <= targetList.length) {
-            iterList = serverList;
-        } else {
-            iterList = targetList;
-        }
+    async function deploy(serverList, targetList) {
+        ns.run('killswitch.js');
+        await ns.sleep(1e3);
+        let iterList = serverList.length <= targetList.length ? serverList : targetList;
+        // if (serverList.length <= targetList.length) {
+        //     iterList = serverList;
+        // } else {
+        //     iterList = targetList;
+        // }
+
         for (let i in iterList) {
             let server = serverList[i];
             let target = targetList[i];
@@ -102,11 +110,11 @@ export async function main(ns) {
         }
     }
 
-    let serverList = buildServerList();
-    let totalHacknetCores = getHacknetTotalCores();
-    let totalHacknetRAM = getHacknetTotalRAM();
-    let targetList = getTargets();
-    deploy(serverList, targetList);
+    let serverList = [];
+    let totalHacknetCores = 0;
+    let totalHacknetRAM = 0;
+    let targetList = [];
+    // deploy(serverList, targetList);
 
     while (true) {
         if (shouldDeploy(serverList, totalHacknetCores, totalHacknetRAM)) {
@@ -114,7 +122,9 @@ export async function main(ns) {
             targetList = getTargets();
             totalHacknetCores = getHacknetTotalCores();
             totalHacknetRAM = getHacknetTotalRAM();
-            deploy(serverList, targetList);
+            ns.print('server list' + serverList);
+            ns.print('target list' + targetList);
+            await deploy(serverList, targetList);
         }
 
         await ns.sleep(1e3);
