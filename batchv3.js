@@ -42,7 +42,7 @@ export async function main(ns) {
     let freeRAM;
     if (server == 'home') {
         freeRAM = ns.getServerMaxRam(server) - homeScriptsRAMSum -
-            (BATCH_SCRIPT_RAM * (ns.getPurchasedServers().length + 1)) - HOME_RAM_KEEP_FREE;
+            (BATCH_SCRIPT_RAM * (ns.getPurchasedServers().length + ns.hacknet.numNodes() + 1)) - HOME_RAM_KEEP_FREE;
     } else {
         freeRAM = ns.getServerMaxRam(server) - ns.getServerUsedRam(server);
     }

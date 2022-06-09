@@ -1,4 +1,4 @@
 /** @param {import(".").NS } ns */
 export async function main(ns) {
-    ns.tprint(ns.corporation.getCorporation());
+    ns.tprint(ns.sleeve.getTask(0));
 }

@@ -169,13 +169,24 @@ export async function main(ns) {
         let factions = [];
         ns.getPlayer().factions.forEach(
             faction => {
-                let factionAugs = ns.singularity.getAugmentationsFromFaction(faction);
-                if (factionAugs.some(aug => !ns.singularity.getOwnedAugmentations(true).includes(aug))) {
+                if (factionHasAugs(faction)) {
                     factions.push(faction);
                 }
             }
         )
         return factions;
+    }
+
+    /**
+     * Returns whether the faction has augs left to buy
+     * 
+     * @param {string} faction 
+     * @returns true if faction has augs left to buy
+     */
+    function factionHasAugs(faction) {
+        let factionAugs = ns.singularity.getAugmentationsFromFaction(faction);
+        let playerAugs = ns.singularity.getOwnedAugmentations(true);
+        return !factionAugs.map(aug => playerAugs.includes(aug)).every(x => x);
     }
 
     /**
@@ -243,15 +254,27 @@ export async function main(ns) {
             let currentFac = factionList[i];
             // skip if donations are unlocked
             if (!donationsPossible(currentFac)) {
-                let otherSleeveFacs = getSleeveList().map(
-                    slv => {
-                        if (ns.sleeve.getTask(slv).task == 'Faction') {
-                            return ns.sleeve.getTask(slv).location;
-                        }
+                // get list of factions being worked by other sleeves
+                let otherSlvFacs = [];
+                let otherSlvs = getSleeveList();
+                for (let i in otherSlvs) {
+                    let slv = otherSlvs[i];
+                    if (
+                        ns.sleeve.getTask(slv).task == 'Faction' &&
+                        sleeve != slv
+                    ) {
+                        otherSlvFacs.push(ns.sleeve.getTask(slv).location);
                     }
-                );
+                    // else {
+                    //     otherSlvFacs.push("");
+                    // }
+                }
 
-                if (!otherSleeveFacs.includes(currentFac)) {
+                if (
+                    !otherSlvFacs.includes(currentFac) &&
+                    currentFac != (ns.gang.getGangInformation().faction ?? "") &&
+                    currentFac != 'Bladeburners'
+                ) {
                     ns.sleeve.setToFactionWork(sleeve, currentFac, 'Field')
                         || ns.sleeve.setToFactionWork(sleeve, currentFac, 'Security')
                         || ns.sleeve.setToFactionWork(sleeve, currentFac, 'Hacking')
@@ -260,8 +283,20 @@ export async function main(ns) {
         }
     }
 
-    function assignWorkout(sleeve) {
-        
+    /**
+     * Assign a single sleeve to work for MegaCorp, to farm company rep to join Silhouette
+     * 
+     * @param {number} sleeve 
+     */
+    function assignMegaCorp(sleeve) {
+        let allSlvJobs = getSleeveList().map(slv => ns.sleeve.getTask(slv).location);
+        if (
+            !allSlvJobs.includes('MegaCorp')
+            // (ns.sleeve.getTask(sleeve).location ?? '') != 'MegaCorp' &&
+            // ns.singularity.getCompanyRep('MegaCorp') < 3.2e6
+        ) {
+            ns.sleeve.setToCompanyWork(sleeve, 'MegaCorp');
+        }
     }
 
     // main loop
@@ -296,7 +331,7 @@ export async function main(ns) {
                 assignCrime(sleeve);
             }
 
-            // attend university, only up to hack 250
+            // attend univ for hacking, only up to 250
             let firstUniCheck = [];
             firstUniCheck.push(getSync(sleeve) >= 100);
             firstUniCheck.push(ns.gang.inGang());
@@ -322,14 +357,25 @@ export async function main(ns) {
                 assignFaction(sleeve);
             }
 
-            // workout
-            let workoutCheck = [];
-            workoutCheck.push(allDonationsUnlocked());
-            if (workoutCheck.every(x => x)) {
-                
+            // earn job rep to set up Silhouette invite
+            let silhouetteCheck = [];
+            silhouetteCheck.push(allDonationsUnlocked());
+            silhouetteCheck.push(ns.singularity.getCompanyRep('MegaCorp') < 3.2e6);
+            silhouetteCheck.push(!ns.getPlayer().factions.includes('Silhouette'));
+            silhouetteCheck.push(!ns.singularity.checkFactionInvitations().includes('Silhouette'));
+            silhouetteCheck.push(factionHasAugs('Silhouette'));
+            if (silhouetteCheck.every(x => x)) {
+                assignMegaCorp(sleeve);
             }
-            
-            // bladeburner actions
+
+            // workout at gym
+
+            // bladeburner actions, just infiltrate synthoids
+            let bbCheck = [];
+            bbCheck.push(allDonationsUnlocked());
+            if (bbCheck.every(x => x)) {
+
+            }
 
             // buy augs
             if (getShock(sleeve) == 0) {

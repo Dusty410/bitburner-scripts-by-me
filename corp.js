@@ -216,11 +216,8 @@ Utilities:
      * Pick a name and choose to Expand right out of the gate… you don’t have anything yet,
      * so expansion is how you make your first Agriculture division!
      */
-    if (ns.getServerMaxRam('home') > 2 ** 10
-        && (ns.getPlayer().bitNodeN == 3 || ns.getPlayer().money > 150e9)
-        // && ns.corporation.getCorporation().
-    ) {
-        ns.corporation.createCorporation(CORP_NAME, !ns.getPlayer().bitNodeN == 3);
+    if (ns.getPlayer().bitNodeN == 3 || ns.getPlayer().money > 150e9) {
+        ns.corporation.createCorporation(CORP_NAME, ns.getPlayer().bitNodeN != 3);
     }
 
     if (funds() >= ns.corporation.getExpandIndustryCost('Agriculture') && !divExists(DIV_NAMES.agro)) {

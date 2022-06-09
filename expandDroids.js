@@ -127,7 +127,7 @@ export async function main(ns) {
             let droidTier = getDroidTierToBuy();
             if (ns.getPlayer().money > ns.getPurchasedServerCost(2 ** droidTier)) {
                 BuyServer(droidTier);
-                await deployDroids();
+                // await deployDroids();
             }
             await ns.sleep(1 * 1e3);
         }
@@ -160,9 +160,9 @@ export async function main(ns) {
             }
 
             // if bought any, deploy them
-            if (boughtDroid) {
-                await deployDroids();
-            }
+            // if (boughtDroid) {
+            //     await deployDroids();
+            // }
 
             await ns.sleep(1 * 1e3);
         }

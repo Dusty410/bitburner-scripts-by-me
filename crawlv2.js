@@ -129,7 +129,7 @@ export async function main(ns) {
                 for (let i in fileList) {
                     let currentFile = fileList[i];
                     if (currentFile.includes('.cct')) {
-                        serverString += '\uD83D\uDCC3'; // page with curl, contract is present
+                        serverString += '\uD83D\uDCC3' + ns.codingcontract.getContractType(currentFile, current.name); // page with curl, contract is present
                     }
                 }
 

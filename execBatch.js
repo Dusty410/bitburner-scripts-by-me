@@ -76,13 +76,26 @@ export async function main(ns) {
     }
 
     /**
+     * Gets total RAM across all purchased servers
+     * 
+     * @returns total RAM across all purchased servers
+     */
+    function getPurchasedTotalRAM() {
+        if (ns.getPurchasedServers().length > 0) {
+            return ns.getPurchasedServers().map(ns.getServerMaxRam).reduce((a, b) => a + b);
+        } else {
+            return 0;
+        }
+    }
+
+    /**
      * Checks if there has been a change in hacknet or purchased servers
      * 
      * @param {string[]} serverList original list of servers
      * @returns true if there has been a change in servers
      */
-    function shouldDeploy(serverList, hacknetCores, hacknetRAM) {
-        return serverList.length != buildServerList().length
+    function shouldDeploy(hacknetCores, hacknetRAM, purchasedRAM) {
+        return purchasedRAM != getPurchasedTotalRAM()
             || hacknetCores != getHacknetTotalCores()
             || hacknetRAM != getHacknetTotalRAM();
     }
@@ -113,15 +126,17 @@ export async function main(ns) {
     let serverList = [];
     let totalHacknetCores = 0;
     let totalHacknetRAM = 0;
+    let totalPurchasedRAM = 0;
     let targetList = [];
     // deploy(serverList, targetList);
 
     while (true) {
-        if (shouldDeploy(serverList, totalHacknetCores, totalHacknetRAM)) {
+        if (shouldDeploy(totalHacknetCores, totalHacknetRAM, totalPurchasedRAM)) {
             serverList = buildServerList();
             targetList = getTargets();
             totalHacknetCores = getHacknetTotalCores();
             totalHacknetRAM = getHacknetTotalRAM();
+            totalPurchasedRAM = getPurchasedTotalRAM();
             ns.print('server list' + serverList);
             ns.print('target list' + targetList);
             await deploy(serverList, targetList);

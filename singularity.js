@@ -100,78 +100,6 @@ export async function main(ns) {
         }
     }
 
-    const POSITIONS = [
-        "Software Engineering Intern",
-        "Junior Software Engineer",
-        "Senior Software Engineer",
-        "Lead Software Developer",
-        "Head of Software",
-        "Head of Engineering",
-        "Vice President of Technology",
-        "Chief Technology Officer",
-    ];
-
-    const GANGS = {
-        'Slum Snakes': {
-            money: 1e6,
-            str: 30,
-            def: 30,
-            dex: 30,
-            agi: 30,
-            karma: -9,
-            plyrGangType: 'combat'
-        },
-        'Tetrads': {
-            str: 75,
-            def: 75,
-            dex: 75,
-            agi: 75,
-            karma: -18,
-            locChoice: ['Chongqing', 'New Tokyo', 'Ishima'],
-            plyrGangType: 'combat'
-        },
-        'Silhouette': {
-            money: 15e6,
-            karma: -22,
-            note: 'must be CEO, CFO, or CTO of a company'
-        },
-        'Speakers for the Dead': {
-            hack: 100,
-            str: 300,
-            def: 300,
-            dex: 300,
-            agi: 300,
-            peopleKilled: 30,
-            karma: -45,
-            jobPrvnt: ['CIA', 'NSA'],
-            plyrGangType: 'combat'
-        },
-        'The Dark Army': {
-            hack: 300,
-            str: 300,
-            def: 300,
-            dex: 300,
-            agi: 300,
-            loc: 'Chongqing',
-            peopleKilled: 5,
-            karma: -45,
-            jobPrvnt: ['CIA', 'NSA'],
-            plyrGangType: 'combat'
-        },
-        'The Syndicate': {
-            hack: 200,
-            str: 200,
-            def: 200,
-            dex: 200,
-            agi: 200,
-            locChoice: ['Sector-12', 'Aevum'],
-            money: 10e6,
-            karma: -90,
-            jobPrvnt: ['CIA', 'NSA'],
-            plyrGangType: 'combat'
-        }
-    }
-
     const FACTIONS = {
         'CyberSec': {
             backdoor: 'CSEC'
@@ -179,7 +107,7 @@ export async function main(ns) {
         'Tian Di Hui': {
             money: 1e9,
             hack: 50,
-            locChoice: ['Chongqing', 'New Tokyo', 'Ishima']
+            loc: ['Chongqing', 'New Tokyo', 'Ishima']
         },
         'Netburners': {
             hack: 80,
@@ -202,29 +130,63 @@ export async function main(ns) {
             augCount: 20,
             money: 75e9,
             hack: 850,
-            str: 850,
-            def: 850,
-            dex: 850,
-            agi: 850
+            combatReq: 850
         },
         'Daedalus': {
             augCount: 30,
             money: 100e9,
             hack: 2500,
-            str: 1500,
-            def: 1500,
-            dex: 1500,
-            agi: 1500,
+            combatReq: 1500,
             note: 'can be met with hack level OR all combat stats'
         },
         'Illuminati': {
             augCount: 30,
             money: 150e9,
             hack: 1500,
-            str: 1200,
-            def: 1200,
-            dex: 1200,
-            agi: 1200
+            combatReq: 1200
+        },
+        'Slum Snakes': {
+            money: 1e6,
+            combatReq: 30,
+            karma: -9,
+            plyrGangType: 'combat'
+        },
+        'Tetrads': {
+            combatReq: 75,
+            karma: -18,
+            loc: ['Chongqing', 'New Tokyo', 'Ishima'],
+            plyrGangType: 'combat'
+        },
+        'Silhouette': {
+            money: 15e6,
+            karma: -22,
+            note: 'must be CEO, CFO, or CTO of a company'
+        },
+        'Speakers for the Dead': {
+            hack: 100,
+            combatReq: 300,
+            peopleKilled: 30,
+            karma: -45,
+            jobPrvnt: ['CIA', 'NSA'],
+            plyrGangType: 'combat'
+        },
+        'The Dark Army': {
+            hack: 300,
+            combatReq: 300,
+            loc: ['Chongqing'],
+            peopleKilled: 5,
+            karma: -45,
+            jobPrvnt: ['CIA', 'NSA'],
+            plyrGangType: 'combat'
+        },
+        'The Syndicate': {
+            hack: 200,
+            combatReq: 200,
+            loc: ['Sector-12', 'Aevum'],
+            money: 10e6,
+            karma: -90,
+            jobPrvnt: ['CIA', 'NSA'],
+            plyrGangType: 'combat'
         }
     }
 
@@ -270,6 +232,110 @@ export async function main(ns) {
     }
 
     /**
+     * Returns whether the faction has augs left to buy
+     * 
+     * @param {string} faction 
+     * @returns true if faction has augs left to buy
+     */
+    function factionHasAugs(faction) {
+        let factionAugs = ns.singularity.getAugmentationsFromFaction(faction);
+        let playerAugs = ns.singularity.getOwnedAugmentations(true);
+        return !factionAugs.map(aug => playerAugs.includes(aug)).every(x => x);
+    }
+
+    /**
+     * Checks if all combat stats are greater than the target level
+     * 
+     * @param {number} target stat level to check against 
+     * @returns true if all combat stats are greater than target
+     */
+    function allCombatGreaterThan(target) {
+        return ns.getPlayer().strength >= target &&
+            ns.getPlayer().defense >= target &&
+            ns.getPlayer().dexterity >= target &&
+            ns.getPlayer().agility >= target;
+    }
+
+    /**
+     * Visit each city and join them if augs left, and if not in any city faction that would
+     * prevent me joining them
+     */
+    async function getCityInvites() {
+        let factions = ns.getPlayer().factions;
+        let invites = ns.singularity.checkFactionInvitations();
+        let cityNames = Object.getOwnPropertyNames(CITIES);
+        for (let i in cityNames) {
+            let city = cityNames[i];
+            if (factionHasAugs(city)
+                && ns.getPlayer().money >= (CITIES[city].money + 200e3) // faction money req + travel
+                && !factions.includes(city)
+                && !invites.includes(city)
+                // check if joined a preventive faction
+                && CITIES[city].factionPrvnt.every(x => !factions.includes(x))
+            ) {
+                while (ns.getPlayer().city != city) {
+                    ns.singularity.travelToCity(city);
+                    await ns.sleep(25);
+                }
+                while (!ns.singularity.checkFactionInvitations().includes(city)) {
+                    await ns.sleep(1e3);
+                }
+            }
+        }
+    }
+
+    /**
+     * Get invites from factions that need a specific location
+     */
+    async function getOtherInvites() {
+        let factions = ['Tetrads', 'The Dark Army', 'The Syndicate', 'Tian Di Hui'];
+        for (let i in factions) {
+            let current = FACTIONS[factions[i]];
+            let currentName = factions[i];
+            if (factionHasAugs(currentName)) {
+                if (ns.getPlayer().numPeopleKilled < (current.peopleKilled ?? 0)) {
+                    murder(current.peopleKilled);
+                }
+
+                if (
+                    allCombatGreaterThan(current.combatReq ?? 0) &&
+                    ns.getPlayer().money >= ((current.money ?? 0) + 200e3) &&
+                    ns.getPlayer().hacking >= (current.hack ?? 0) &&
+                    ns.heart.break() <= (current.karma ?? 0) &&
+                    !ns.getPlayer().factions.includes(currentName) &&
+                    !ns.singularity.checkFactionInvitations().includes(currentName) &&
+                    ns.getPlayer().numPeopleKilled >= (current.peopleKilled ?? 0)
+                ) {
+                    while (ns.getPlayer().city != current.loc[0]) {
+                        ns.singularity.travelToCity(current.loc[0]);
+                        await ns.sleep(25);
+                    }
+                    while (!ns.singularity.checkFactionInvitations().includes(currentName)) {
+                        await ns.sleep(1e3);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Apply to MegaCorp to get Silhouette invite
+     */
+    function getSilhouetteInvite() {
+        let company = 'MegaCorp';
+        let job = 'software';
+        let position = 'Chief Technology Officer';
+        while (
+            ns.getPlayer().charisma >= 750 &&
+            ns.getPlayer().hacking >= 1000 &&
+            ns.singularity.getCompanyRep(company) >= 3.2e6 &&
+            (ns.getPlayer().jobs[company] ?? '') != position
+        ) {
+            ns.singularity.applyToCompany(company, job);
+        }
+    }
+
+    /**
      * Automatically join each faction that isn't a city, otherwise, before joining a city faction,
      * check if we have every aug from that faction first, then join if we have some left
      */
@@ -280,12 +346,44 @@ export async function main(ns) {
             name => {
                 if (!cities.includes(name)) {
                     ns.singularity.joinFaction(name);
+                } else if (factionHasAugs(name)) {
+                    ns.singularity.joinFaction(name);
                 }
             }
         )
     }
 
-    // TODO: add function to check city augs, if any left, join them
+    /**
+     * Murder target amount of people
+     * 
+     * @param {number} target bodycount desired
+     */
+    function murder(target) {
+        if (
+            ns.getPlayer().numPeopleKilled < target &&
+            // !ns.getPlayer().factions.includes('Speakers for the Dead') &&
+            // !ns.singularity.checkFactionInvitations().includes('Speakers for the Dead') &&
+            !ns.scriptRunning('crime.js', 'home')
+        ) {
+            if (
+                ns.scriptRunning('bladeburner.js', 'home') &&
+                !ns.singularity.getOwnedAugmentations().includes('The Blade\'s Simulacrum')
+            ) {
+                ns.scriptKill('bladeburner.js', 'home');
+            }
+            ns.run('crime.js', 1, target);
+        }
+
+        // restart bladeburner, if needed
+        if ((
+            ns.getPlayer().numPeopleKilled >= target &&
+            !ns.scriptRunning('bladeburner.js', 'home') &&
+            !ns.scriptRunning('crime.js', 'home')
+        ) || ns.singularity.getOwnedAugmentations().includes('The Blade\'s Simulacrum')
+        ) {
+            ns.run('bladeburner.js');
+        }
+    }
 
     // main loop
     while (true) {
@@ -306,7 +404,10 @@ export async function main(ns) {
         // apply for corp jobs
         applyToJobs();
 
-        // accept pending faction invites, if not a city
+        // factions
+        await getCityInvites();
+        await getOtherInvites();
+        getSilhouetteInvite();
         joinFactions();
 
         // join bladeburner if possible
