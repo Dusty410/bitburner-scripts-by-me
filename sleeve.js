@@ -63,6 +63,9 @@ export async function main(ns) {
             loc: 'Chongqing'
         }
     }
+    const TRACKING = { type: 'Contracts', name: 'Tracking' };
+    const INVESTIGATION = { type: 'Operations', name: 'Investigation' };
+    const ASSASSINATION = { type: 'Operations', name: 'Assassination' };
 
     const getShock = sleeve => ns.sleeve.getSleeveStats(sleeve).shock;
     const getSync = sleeve => ns.sleeve.getSleeveStats(sleeve).sync;
@@ -236,11 +239,16 @@ export async function main(ns) {
      * Check if all donations have been unlocked, or could be after next aug install, for factions
      * that we have currently joined
      * 
+     * Ignore gang name if we're in one, Bladeburner faction, and Shadows of Anarchy faction
+     * 
      * @returns true if all donations unlocked
      */
     function allDonationsUnlocked() {
-        let facDonUnlocked = ns.getPlayer().factions.map(donationsPossible).every(x => x);
-        return facDonUnlocked;
+        let facDonationsUnlocked = ns.getPlayer().factions.map(x =>
+            [ns.getPlayer().inGang ? ns.gang.getGangInformation().faction : "", 'Bladeburners', 'Shadows of Anarchy'].includes(x) ||
+            donationsPossible(x)
+        ).every(x => x);
+        return facDonationsUnlocked;
     }
 
     /**
@@ -296,6 +304,73 @@ export async function main(ns) {
             // ns.singularity.getCompanyRep('MegaCorp') < 3.2e6
         ) {
             ns.sleeve.setToCompanyWork(sleeve, 'MegaCorp');
+        }
+    }
+    /**
+     * Check if a sleeve should be set to infiltrate synthoids
+     * 
+     * @returns true if any counts are below 20
+     */
+    function shouldInfilSynth() {
+        return ns.bladeburner.getActionCountRemaining(TRACKING.type, TRACKING.name) < 20 ||
+            ns.bladeburner.getActionCountRemaining(INVESTIGATION.type, INVESTIGATION.name) < 20 ||
+            ns.bladeburner.getActionCountRemaining(ASSASSINATION.type, ASSASSINATION.name) < 20
+    }
+
+    /**
+     * Assign a sleeve to Infiltrate synthoids
+     * 
+     * @param {number} sleeve number of sleeve
+     */
+    function assignInfilSynth(sleeve) {
+        if (ns.sleeve.getTask(sleeve).location != 'This will generate additional contracts and operations') {
+            ns.sleeve.setToBladeburnerAction(sleeve, 'Infiltrate synthoids');
+        }
+    }
+
+    /**
+     * Assign a sleeve to the appropriate stat at Powerhouse Gym in Sector-12
+     * 
+     * @param {number} sleeve number of sleeve
+     */
+    function assignWorkout(sleeve) {
+        const getSlvWorkoutList = () => getSleeveList().map(slv => ns.sleeve.getTask(slv).gymStatType);
+
+        const STR = 'Train Strength';
+        const DEF = 'Train Defense';
+        const DEX = 'Train Dexterity';
+        const AGI = 'Train Agility';
+        const PH = 'Powerhouse Gym';
+
+        // location check
+        if (ns.sleeve.getInformation(sleeve).city != 'Sector-12') {
+            ns.sleeve.travel(sleeve, 'Sector-12');
+        }
+
+        // set to train stats
+        if (
+            ns.sleeve.getTask(sleeve).gymStatType != STR &&
+            getSlvWorkoutList().filter(x => x == STR).length < 2
+        ) {
+            ns.sleeve.setToGymWorkout(sleeve, PH, STR)
+        }
+        if (
+            ns.sleeve.getTask(sleeve).gymStatType != DEF &&
+            getSlvWorkoutList().filter(x => x == DEF).length < 2
+        ) {
+            ns.sleeve.setToGymWorkout(sleeve, PH, DEF)
+        }
+        if (
+            ns.sleeve.getTask(sleeve).gymStatType != DEX &&
+            getSlvWorkoutList().filter(x => x == DEX).length < 2
+        ) {
+            ns.sleeve.setToGymWorkout(sleeve, PH, DEX)
+        }
+        if (
+            ns.sleeve.getTask(sleeve).gymStatType != AGI &&
+            getSlvWorkoutList().filter(x => x == AGI).length < 1 // TODO: add logic so that this isn't hardcoded
+        ) {
+            ns.sleeve.setToGymWorkout(sleeve, PH, AGI)
         }
     }
 
@@ -369,12 +444,20 @@ export async function main(ns) {
             }
 
             // workout at gym
+            let workoutCheck = [];
+            workoutCheck.push(allDonationsUnlocked());
+            workoutCheck.push(!factionHasAugs('Silhouette'));
+            if (workoutCheck.every(x => x)) {
+                assignWorkout(sleeve);
+            }
 
             // bladeburner actions, just infiltrate synthoids
             let bbCheck = [];
             bbCheck.push(allDonationsUnlocked());
+            bbCheck.push(shouldInfilSynth());
+            bbCheck.push(ns.bladeburner.getRank() < 400e3);
             if (bbCheck.every(x => x)) {
-
+                assignInfilSynth(sleeve);
             }
 
             // buy augs
@@ -385,8 +468,3 @@ export async function main(ns) {
         await ns.sleep(25);
     }
 }
-
-/*
-best gym, powerhouse in sector-12
-best univ, zb univ in volhaven
-*/

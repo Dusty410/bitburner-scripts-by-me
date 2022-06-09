@@ -1,48 +1,24 @@
 /** @param {import(".").NS } ns */
 export async function main(ns) {
     /*
-    Agriculture:
-0.5\text{ }Water+0.5\text{ }Energy\Rightarrow 1\text{ }Plants+1\text{ }Food
+    ===Divs w/ products===
+    Tobacco: 1 plants + 0.2 water => products
+    Software: 0.5 hardware + 0.5 energy => 1 AI cores + products
+    Food: 0.5 food + 0.5 water + 0.2 energy => products
+    Computer: 2 metal + 1 energy => 1 hardware + products
+    Healthcare: 10 robots + 5 AI cores + 5 energy + 5 water => products
+    Real Estate: 5 metal + 5 energy + 2 water + 4 hardware => 1 real estate + products
+    Pharmaceutical: 2 chemicals + 1 energy + 0.5 water => 1 drugs + products
+    Robotics: 5 hardware + 3 energy => 1 robots + products
 
-Tobacco:
-1\text{ }Plants+0.2\text{ }Water\Rightarrow Products
-
-Software:
-0.5\text{ }Hardware+0.5\text{ }Energy\Rightarrow 1\text{ }AICores+Products
-
-Food:
-0.5\text{ }Food+0.5\text{ }Water+0.2\text{ }Energy\Rightarrow Products
-
-Chemical:
-1\text{ }Plants+0.5\text{ }Energy+0.5\text{ }Water\Rightarrow 1\text{ }Chemicals
-
-Computer:
-2\text{ }Metal+1\text{ }Energy\Rightarrow 1\text{ }Hardware+Products
-
-Energy:
-0.1\text{ }Hardware+0.2\text{ }Metal\Rightarrow 1\text{ }Energy
-
-Fishing:
-0.5\text{ }Energy\Rightarrow 1\text{ }Food
-
-Healthcare:
-10\text{ }Robots+5\text{ }AICores+5\text{ }Energy+5\text{ }Water\Rightarrow Products
-
-Mining:
-0.8\text{ }Energy\Rightarrow 1\text{ }Metal
-
-Real Estate:
-5\text{ }Metal+5\text{ }Energy+2\text{ }Water+4\text{ }Hardware\Rightarrow 1\text{ }RealEstate+Products
-
-Pharmaceutical:
-2\text{ }Chemicals+1\text{ }Energy+0.5\text{ }Water\Rightarrow 1\text{ }Drugs+Products
-
-Robotics:
-5\text{ }Hardware+3\text{ }Energy\Rightarrow 1\text{ }Robots+Products
-
-Utilities:
-0.1\text{ }Hardware+0.1\text{ }Metal\Rightarrow 1\text{ }Water
-*/
+    ===Divs w/o products===
+    Agriculture: 0.5 water + 0.5 energy => 1 plants + 1 food
+    Chemical: 1 plants + 0.5 energy + 0.5 water => 1 chemicals
+    Energy: 0.1 hardware + 0.2 metal => 1 energy
+    Fishing: 0.5 energy => 1 food
+    Mining: 0.8 energy => 1 metal
+    Utilities: 0.1 hardware + 0.1 metal => 1 water
+    */
 
     const CORP_NAME = 'EJ Dynamics';
     const DIV_NAMES = {
@@ -92,37 +68,68 @@ Utilities:
     function expandToAllCities(div) {
         CITIES.forEach(
             city => {
-                if (!ns.corporation.getDivision(div).cities.includes(city)) {
-                    if (funds() >= ns.corporation.getExpandCityCost()) {
-                        ns.corporation.expandCity(div, city);
-                    }
+                if (
+                    funds() >= ns.corporation.getExpandCityCost() &&
+                    !ns.corporation.getDivision(div).cities.includes(city)
+                ) {
+                    ns.corporation.expandCity(div, city);
                 }
             }
         );
     }
 
     /**
-     * Buys warehouse levels in all cities up to the target level in the specified division
+     * Buy warehouse in all cities that don't have one, in the specified division
      * 
      * @param {string} div division name
-     * @param {number} targetLvl target warehouse level
      */
-    function buyWarehouseAllCities(div, targetLvl) {
-        CITIES.forEach(
+    function buyWarehouseAllCities(div) {
+        ns.corporation.getDivision(div).cities.forEach(
             city => {
-                while (ns.corporation.getWarehouse(div, city).level < targetLvl) {
-                    if (funds() >= ns.corporation.getPurchaseWarehouseCost()) {
-                        ns.corporation.purchaseWarehouse(div, city);
-                    }
+                if (
+                    funds() >= ns.corporation.getPurchaseWarehouseCost() &&
+                    !ns.corporation.hasWarehouse(div, city)
+                ) {
+                    ns.corporation.purchaseWarehouse(div, city);
                 }
             }
         );
     }
 
-    function enableSmartSupplyAllCities(division) {
-        for (let i in CITIES) {
-            var city = CITIES[i];
-            ns.corporation.setSmartSupply(division, city, true);
+    /**
+     * Upgrades the warehouse level in all cities in specified division to target level
+     * 
+     * @param {string} div division name
+     * @param {number} targetLvl target warehouse level
+     */
+    function upgradeWarehouseAllCities(div, targetLvl) {
+        ns.corporation.getDivision(div).cities.forEach(
+            city => {
+                while (
+                    funds() >= ns.corporation.getUpgradeWarehouseCost(div, city) &&
+                    ns.corporation.hasWarehouse(div, city) &&
+                    ns.corporation.getWarehouse(div, city).level < targetLvl
+                ) {
+                    ns.corporation.upgradeWarehouse(div, city);
+                }
+            }
+        )
+    }
+
+    /**
+     * Turn on smart supply in specified division in all cities
+     * 
+     * @param {string} div division name
+     */
+    function enableSmartSupplyAllCities(div) {
+        let cities = ns.corporation.getDivision(div).cities;
+        for (let i in cities) {
+            let city = cities[i];
+            if (
+                ns.corporation.hasWarehouse(div, city) &&
+                ns.corporation.hasUnlockUpgrade('Smart Supply')
+            )
+                ns.corporation.setSmartSupply(div, city, true);
         }
     }
 
@@ -216,7 +223,10 @@ Utilities:
      * Pick a name and choose to Expand right out of the gate… you don’t have anything yet,
      * so expansion is how you make your first Agriculture division!
      */
-    if (ns.getPlayer().bitNodeN == 3 || ns.getPlayer().money > 150e9) {
+    if (
+        (ns.getPlayer().bitNodeN == 3 || ns.getPlayer().money > 150e9) &&
+        !ns.getPlayer().hasCorporation
+    ) {
         ns.corporation.createCorporation(CORP_NAME, ns.getPlayer().bitNodeN != 3);
     }
 
@@ -232,7 +242,10 @@ Utilities:
      * Hire 3 Employees for that office, one in each of the essential positions: Operations, Engineer, and Business.
      */
     expandToAllCities(DIV_NAMES.agro);
-    if (funds() > ns.corporation.getUnlockUpgradeCost('Smart Supply')) {
+    if (
+        funds() >= ns.corporation.getUnlockUpgradeCost('Smart Supply') &&
+        !ns.corporation.hasUnlockUpgrade('Smart Supply')
+    ) {
         ns.corporation.unlockUpgrade('Smart Supply');
     }
     enableSmartSupplyAllCities(DIV_NAMES.agro);

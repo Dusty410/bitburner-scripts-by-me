@@ -419,6 +419,18 @@ export async function main(ns) {
 
         // install augs
 
+        // graft nickofolas Congruity Implant
+        if (
+            ns.getPlayer().money >= ns.grafting.getAugmentationGraftPrice('nickofolas Congruity Implant') &&
+            ns.singularity.getOwnedAugmentations().includes('The Blade\'s Simulacrum') &&
+            !ns.singularity.getOwnedAugmentations().includes('nickofolas Congruity Implant')
+        ) {
+            if (ns.getPlayer().city != 'New Tokyo') {
+                ns.singularity.travelToCity('New Tokyo');
+            }
+            ns.grafting.graftAugmentation('nickofolas Congruity Implant', false)
+        }
+
         await ns.sleep(1 * 1e3);
     }
 }
