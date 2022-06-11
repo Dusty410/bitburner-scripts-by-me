@@ -421,9 +421,9 @@ export async function main(ns) {
 
         // graft nickofolas Congruity Implant
         if (
+            ns.grafting.getGraftableAugmentations().includes('nickofolas Congruity Implant') &&
             ns.getPlayer().money >= ns.grafting.getAugmentationGraftPrice('nickofolas Congruity Implant') &&
-            ns.singularity.getOwnedAugmentations().includes('The Blade\'s Simulacrum') &&
-            !ns.singularity.getOwnedAugmentations().includes('nickofolas Congruity Implant')
+            ns.singularity.getOwnedAugmentations().includes('The Blade\'s Simulacrum')
         ) {
             if (ns.getPlayer().city != 'New Tokyo') {
                 ns.singularity.travelToCity('New Tokyo');
