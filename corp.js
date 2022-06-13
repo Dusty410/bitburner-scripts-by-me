@@ -23,6 +23,17 @@ export async function main(ns) {
     ns.disableLog('sleep');
 
     const CORP_NAME = 'EJ Dynamics';
+    const UNLOCK_UPGRADES = [
+        'Export',
+        'VeChain',
+        'Market Research - Demand',
+        'Shady Accounting',
+        'Market Data - Competition',
+        'Government Partnership',
+        'Warehouse API',
+        'Office API',
+        'Smart Supply'
+    ];
     const DIVS = {
         agro: {
             name: 'Agro',
@@ -50,7 +61,7 @@ export async function main(ns) {
         },
         chem: {
             name: 'ChemCo',
-            industry: 'Chemicals',
+            industry: 'Chemical',
             prodMats: ['Chemicals'],
             makesProducts: false
         },
@@ -124,8 +135,51 @@ export async function main(ns) {
         mgmt: 'Management',
         rd: 'Research & Development'
     };
+    const RESEARCH = [
+        {
+            name: 'Hi-Tech R&D Laboratory',
+            prereq: 'none'
+        },
+        {
+            name: 'Drones',
+            prereq: 'Hi-Tech R&D Laboratory'
+        },
+        {
+            name: 'Drones - Assembly',
+            prereq: 'Drones'
+        },
+        {
+            name: 'Drones - Transport',
+            prereq: 'Drones'
+        },
+        {
+            name: 'Market-TA.I',
+            prereq: 'Hi-Tech R&D Laboratory'
+        },
+        {
+            name: 'Market-TA.II',
+            prereq: 'Market-TA.I'
+        },
+        {
+            name: 'Self-Correcting Assemblers',
+            prereq: 'Hi-Tech R&D Laboratory'
+        },
+        {
+            name: 'uPgrade: Fulcrum',
+            prereq: 'Hi-Tech R&D Laboratory'
+        },
+        {
+            name: 'uPgrade: Capacity.I',
+            prereq: 'uPgrade: Fulcrum'
+        },
+        {
+            name: 'uPgrade: Capacity.II',
+            prereq: 'uPgrade: Capacity.I'
+        }
+    ]
 
     const funds = () => ns.corporation.getCorporation().funds;
+    const corpProfit = () => ns.corporation.getCorporation().revenue - ns.corporation.getCorporation().expenses;
 
     /**
      * Search if a division with the specified name exists
@@ -161,7 +215,7 @@ export async function main(ns) {
      * @param {string} funcName name of function we're waiting for
      */
     async function waitForMoney(amount, funcName) {
-        ns.print(`Waiting for money for: ${funcName}`)
+        ns.print(`Waiting for money for: ${funcName}, costs: $${Intl.NumberFormat('en-US').format(amount)}`)
         while (funds() < amount) {
             await ns.sleep(25);
         }
@@ -201,7 +255,7 @@ export async function main(ns) {
      * @param {string} div division name
      * @param {number} targetLvl target warehouse level
      */
-    async function upgrWrHsAllCitiesToTrgt(div, targetLvl) {
+    async function upgrWarehouseAllCities(div, targetLvl) {
         for (let city of CITIES) {
             while (
                 ns.corporation.hasWarehouse(div, city) &&
@@ -331,21 +385,37 @@ export async function main(ns) {
         for (let city of cityList) {
             let jobs = Object.values(JOBS);
             for (let job of jobs) {
-                await ns.corporation.setAutoJobAssignment(div, city, job, empTarget);
+                if (ns.corporation.getOffice(div, city).employeeJobs[job] < empTarget) {
+                    await ns.corporation.setAutoJobAssignment(div, city, job, empTarget);
+                }
             }
         }
     }
 
     /**
-     * Set the sell parameters for the materials that an agriculture division produces
+     * Set the sell parameters for the materials and products that a division produces
      * 
      * @param {object} divObj division object, from DIVS
      */
-    function sellDivProducts(divObj) {
+    function sellDivMatsAndProducts(divObj) {
+        let div = divObj.name;
         if (divObj.prodMats.length > 0) {
             for (let city of CITIES) {
                 for (let mat of divObj.prodMats) {
-                    ns.corporation.sellMaterial(divObj.name, city, mat, 'MAX', 'MP');
+                    ns.corporation.sellMaterial(div, city, mat, 'MAX', 'MP');
+                    if (ns.corporation.hasResearched(div, 'Market-TA.II')) {
+                        ns.corporation.setMaterialMarketTA2(div, city, mat, true);
+                    }
+                }
+            }
+        }
+        if (divObj.makesProducts) {
+            for (let prod of ns.corporation.getDivision(div).products) {
+                if (ns.corporation.getProduct(div, prod).developmentProgress >= 100) {
+                    ns.corporation.sellProduct(div, 'Aevum', prod, 'MAX', 'MP', true);
+                    if (ns.corporation.hasResearched(div, 'Market-TA.II')) {
+                        ns.corporation.setProductMarketTA2(div, prod, true);
+                    }
                 }
             }
         }
@@ -375,13 +445,23 @@ export async function main(ns) {
      * 
      * @param {string} div division name
      */
-    function attemptMakeProd(div) {
+    async function attemptMakeProd(div) {
         const getProducts = () => ns.corporation.getDivision(div).products;
-        const allProdDone = () => getProducts().every(x => ns.corporation.getProduct(div, x).developmentProgress == 100);
+        const allProdDone = () => getProducts().every(x => ns.corporation.getProduct(div, x).developmentProgress >= 100);
         const getProdName = () => Math.trunc(Math.random() * 1e6);
-        // const getProdSellVal = () => getProducts().map(x => ns.corporation.getProduct(x).)
-        // ns.corporation.getProduct().properties.qlt
-        
+        const getLowestRatedProd = () => {
+            let lowestRat = Infinity;
+            let lowestProd;
+            for (let prod of getProducts()) {
+                let rat = ns.corporation.getProduct(div, prod).rat;
+                if (rat < lowestRat) {
+                    lowestRat = rat;
+                    lowestProd = prod;
+                }
+            }
+            return lowestProd;
+        }
+
         let productLimit = 3;
         let invest = 1e9;
 
@@ -393,10 +473,70 @@ export async function main(ns) {
         }
 
         if (allProdDone() && getProducts().length == productLimit) {
+            ns.corporation.discontinueProduct(div, getLowestRatedProd());
         }
 
         if (allProdDone() && getProducts().length < productLimit) {
+            await waitForMoney(invest * 2, 'makeProduct');
             ns.corporation.makeProduct(div, 'Aevum', getProdName(), invest, invest);
+        }
+    }
+
+    /**
+     * Cycles through each of the unlockable upgrades and attempts to buy them
+     */
+    function attemptUnlockUpgrade() {
+        for (let upgrade of UNLOCK_UPGRADES) {
+            if (
+                !ns.corporation.hasUnlockUpgrade(upgrade)
+                && funds() >= ns.corporation.getUnlockUpgradeCost(upgrade)
+            ) {
+                ns.corporation.unlockUpgrade(upgrade);
+            }
+        }
+    }
+
+    /**
+     * Attempts to buy all relevant research for specified division
+     * 
+     * @param {string} div division name
+     */
+    function attemptBuyResearch(div) {
+        const getResearch = () => ns.corporation.getDivision(div).research;
+        const researchCheck = (research) => {
+            if (ns.corporation.getDivision(div).makesProducts) {
+                return !ns.corporation.hasResearched(div, research)
+                    && getResearch() >= (70000 + ns.corporation.getResearchCost(div, research));
+            } else {
+                if (research.includes('uPgrade')) {
+                    return false;
+                } else {
+                    return !ns.corporation.hasResearched(div, research)
+                        && getResearch() >= (70000 + ns.corporation.getResearchCost(div, research));
+                }
+            }
+        }
+
+        for (let research of RESEARCH) {
+            if (
+                (research.prereq === 'none' || ns.corporation.hasResearched(div, research.prereq))
+                && researchCheck(research.name)
+            ) {
+                ns.corporation.research(div, research.name)
+            }
+        }
+    }
+
+    /**
+     * Automatically tell the HNSpend.js script what to spend hashes on
+     */
+    function assignHashSpend() {
+        let spend = corpProfit() < 1e9 ? 'corpf' : 'corpr';
+        if (!ns.isRunning('HNSpend.js', 'home', spend)) {
+            if (ns.scriptRunning('HNSpend.js', 'home')) {
+                ns.scriptKill('HNSpend.js', 'home');
+            }
+            ns.run('HNSpend.js', 1, spend);
         }
     }
 
@@ -406,8 +546,6 @@ export async function main(ns) {
      * Pick a name and choose to Expand right out of the gate… you don’t have anything yet,
      * so expansion is how you make your first Agriculture division!
      */
-    let corpNeeds = 'funds';
-    await ns.write('/text/corpNeeds.txt', corpNeeds, 'w');
 
     if (
         (ns.getPlayer().bitNodeN == 3 || ns.getPlayer().money > 150e9) &&
@@ -457,8 +595,8 @@ export async function main(ns) {
      * change to say something like Sell (69.420/MAX) @$3.210k, indicating that you’re selling
      * 69.420 items per second (out of whatever MAX happens to be now), at $3.210k per unit. Great!
      */
-    await upgrWrHsAllCitiesToTrgt(DIVS.agro.name, 3);
-    sellDivProducts(DIVS.agro);
+    await upgrWarehouseAllCities(DIVS.agro.name, 3);
+    sellDivMatsAndProducts(DIVS.agro);
 
     /**
      * Time to Grow
@@ -564,7 +702,7 @@ export async function main(ns) {
         'Smart Storage'
     ];
     await levelUpgrades(upgradeList, 10);
-    await upgrWrHsAllCitiesToTrgt(DIVS.agro.name, 10);
+    await upgrWarehouseAllCities(DIVS.agro.name, 10);
 
     /**
      * We’re gonna do that thing again where we Buy some exact amounts of materials, one tick at a time.
@@ -617,7 +755,7 @@ export async function main(ns) {
      * 
      * This should get the Production Multiplier over 500. Neat.
      */
-    await upgrWrHsAllCitiesToTrgt(DIVS.agro.name, 19);
+    await upgrWarehouseAllCities(DIVS.agro.name, 19);
     targetInvList = [
         {
             name: 'Hardware',
@@ -685,7 +823,7 @@ export async function main(ns) {
      * products list in an office with a warehouse set up (right off the bat this will only
      * be Sector-12 if you don’t expand and set them up first).
      */
-    attemptMakeProd(DIVS.tobac.name);
+    await attemptMakeProd(DIVS.tobac.name);
 
     /**
      * Now we’ll introduce a set of guidelines for continued improvement of the corporation
@@ -699,15 +837,13 @@ export async function main(ns) {
      *         3. While you can afford to sink money into AdVert.Inc, do so for the Tobacco division
      *         (should end up with something like 36k Awareness and 27k Popularity)
      */
-    // upgradeList = [
-    //     'FocusWires',
-    //     'Neural Accelerators',
-    //     'Speech Processor Implants',
-    //     'Nuoptimal Nootropic Injector Implants'
-    // ];
-    // await levelUpgrades(upgradeList, 20);
-
-
+    upgradeList = [
+        'FocusWires',
+        'Neural Accelerators',
+        'Speech Processor Implants',
+        'Nuoptimal Nootropic Injector Implants'
+    ];
+    await levelUpgrades(upgradeList, 20);
 
     /**
      * When v1 completes, set its sell amount to MAX, and its price to MP. Set it the
@@ -718,46 +854,14 @@ export async function main(ns) {
      * do it again for v3 when ready. During this process, don’t spend Scientific Research!
      * Your tobacco products will benefit in a huge way from stockpiled research, so each
      * version will be better than the last!
-     */
-    // ns.corporation.sellProduct(DIVS.tobac, 'Aevum', prod, 'MAX', 'MP', true);
-
-    // for (let i = 0; i < 2; i++) {
-    //     ns.corporation.makeProduct(DIVS.tobac, 'Aevum', ++prod, 1e9, 1e9);
-    //     while (ns.corporation.getProduct(DIVS.tobac, prod).developmentProgress < 100) {
-    //         if (ns.corporation.getCorporation().funds > 3e12) {
-    //             ns.corporation.levelUpgrade('Wilson Analytics');
-    //         }
-
-    //         if (ns.corporation.getCorporation().funds > ns.corporation.getHireAdVertCost(DIVS.tobac)) {
-    //             ns.corporation.hireAdVert(DIVS.tobac);
-    //         }
-    //     }
-    //     ns.corporation.sellProduct(DIVS.tobac, 'Aevum', prod, 'MAX', 'MP', true);
-    // }
-
-    /**
+     * 
      * If you haven’t already, expand to all cities, then hire employees up to 60 in
      * Aevum primarily, but do hire at each office eventually. Feel free to let Aevum
      * be your hiring focus indefinitely though; it needs the employees for continuing
      * design work, while other cities will simply produce and sell a bit more if you
      * staff them. It’s not nothing, but better products will sell better on their own
      * so it’s more of a “sprinkles on the sundae” situation.
-     */
-    // var employeesToHire = 30;
-    // var numJobs = Object.keys(JOBS).length;
-    // var jobsPerPosition = employeesToHire / numJobs;
-    // ns.corporation.upgradeOfficeSize(DIVS.tobac, 'Aevum', employeesToHire);
-    // for (let index = 0; index < employeesToHire; index++) {
-    //     ns.corporation.hireEmployee(DIVS.tobac, 'Aevum');
-    // }
-
-    // ns.corporation.setAutoJobAssignment(DIVS.tobac, 'Aevum', JOBS.ops, jobsPerPosition);
-    // ns.corporation.setAutoJobAssignment(DIVS.tobac, 'Aevum', JOBS.eng, jobsPerPosition);
-    // ns.corporation.setAutoJobAssignment(DIVS.tobac, 'Aevum', JOBS.bus, jobsPerPosition);
-    // ns.corporation.setAutoJobAssignment(DIVS.tobac, 'Aevum', JOBS.mgmt, jobsPerPosition);
-    // ns.corporation.setAutoJobAssignment(DIVS.tobac, 'Aevum', JOBS.rd, jobsPerPosition);
-
-    /**
+     * 
      * When the hiring in Aevum is done and the corp has 3 products, Discontinue the
      * first one (the lowest value) and make another, same setup as before. There
      * should always be a product under development. When the eggheads down in
@@ -771,8 +875,61 @@ export async function main(ns) {
      * when setting prices on new products (still MAX and MP), it’s only necessary
      * to turn on Market-TA.II (to the right, inside MARKET-TA).
      */
-    // var products = ns.corporation.getDivision().products;
-    // while (products.length < 3) {
-    //     await ns.sleep(25);
-    // }
+
+    while (true) {
+        if (funds() >= ns.corporation.getUpgradeLevelCost('Wilson Analytics')) {
+            ns.corporation.levelUpgrade('Wilson Analytics');
+        }
+
+        attemptUnlockUpgrade();
+
+        assignHashSpend();
+
+        for (let div in DIVS) {
+            let divObject = DIVS[div];
+            let divName = divObject.name;
+            let divInd = divObject.industry;
+
+            // create it if it doesn't exist, and we can afford it
+            if (
+                !divExists(divName)
+                && funds() >= ns.corporation.getExpandIndustryCost(divInd) + 2e12
+                // arbitrary amount added to make sure we have money for new offices & warehouses
+            ) {
+                ns.corporation.expandIndustry(divInd, divName);
+            }
+
+            // if it exists, do all the checks
+            if (divExists(divName)) {
+                await expandToAllCities(divName);
+                await buyWarehouseAllCities(divName);
+                await upgrWarehouseAllCities(divName, 20);
+                enableSmartSupplyAllCities(divName);
+                attemptBuyResearch(divName);
+                sellDivMatsAndProducts(divObject);
+                if (divObject.makesProducts) {
+                    await attemptMakeProd(divName);
+                }
+                if (CITIES.some(city => ns.corporation.getOffice(divName, city).size < 60)) {
+                    await upgradeOffices(divName, CITIES, 60);
+                }
+                hireEmployeesAllCities(divName);
+                // special circumstances for tobacco div, keep increasing this to the sky for cheevo
+                if (divName == DIVS.tobac.name) {
+                    if (funds() >= ns.corporation.getOfficeSizeUpgradeCost(divName, 'Aevum', 15)) {
+                        ns.corporation.upgradeOfficeSize(divName, 'Aevum', 15);
+                        hireEmployeesAllCities(divName);
+                        await assignJobs(divName, ['Aevum'], (ns.corporation.getOffice(divName, 'Aevum').size / 5));
+                    }
+                } else {
+                    await assignJobs(divName, CITIES, 12);
+                }
+                // hire an advert, if we can
+                if (funds() >= ns.corporation.getHireAdVertCost(divName)) {
+                    ns.corporation.hireAdVert(divName);
+                }
+            }
+        }
+        await ns.sleep(25);
+    }
 }

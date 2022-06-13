@@ -420,6 +420,7 @@ export async function main(ns) {
             jobCheck.push(getSync(sleeve) >= 100);
             jobCheck.push(ns.gang.inGang());
             jobCheck.push(ns.getPlayer().hacking >= 250);
+            jobCheck.push(!allCorpJobsDone());
             if (jobCheck.every(x => x)) {
                 assignJob(sleeve);
             }
@@ -428,6 +429,7 @@ export async function main(ns) {
             let factionCheck = [];
             // check to make sure that all corp factions have been unlocked
             factionCheck.push(allCorpJobsDone());
+            factionCheck.push(!allDonationsUnlocked());
             if (factionCheck.every(x => x)) {
                 assignFaction(sleeve);
             }
