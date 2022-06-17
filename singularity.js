@@ -394,10 +394,10 @@ export async function main(ns) {
         // try and buy all the darkweb programs
         if (!ns.getPlayer().tor) {
             ns.singularity.purchaseTor();
-            let programsList = ns.singularity.getDarkwebPrograms();
-            programsList.forEach(ns.singularity.purchaseProgram);
+        } else {
+            ns.singularity.getDarkwebPrograms().forEach(ns.singularity.purchaseProgram);
         }
-
+        
         // check if we can afford a home memory or core upgrade
         if (ns.getPlayer().money > ns.singularity.getUpgradeHomeRamCost()) {
             ns.singularity.upgradeHomeRam();
