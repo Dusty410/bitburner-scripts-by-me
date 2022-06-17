@@ -473,7 +473,8 @@ export async function main(ns) {
         }
 
         if (allProdDone() && getProducts().length == productLimit) {
-            ns.corporation.discontinueProduct(div, getLowestRatedProd());
+            let worstProd = await getLowestRatedProd();
+            ns.corporation.discontinueProduct(div, worstProd);
         }
 
         if (allProdDone() && getProducts().length < productLimit) {
@@ -531,7 +532,8 @@ export async function main(ns) {
      * Automatically tell the HNSpend.js script what to spend hashes on
      */
     function assignHashSpend() {
-        let spend = corpProfit() < 1e9 ? 'corpf' : 'corpr';
+        let spend = ns.corporation.getCorporation().divisions.some(x => x.makesProducts)
+            && corpProfit() > 10e6 ? 'corpr' : 'corpf';
         if (!ns.isRunning('HNSpend.js', 'home', spend)) {
             if (ns.scriptRunning('HNSpend.js', 'home')) {
                 ns.scriptKill('HNSpend.js', 'home');
@@ -541,18 +543,61 @@ export async function main(ns) {
     }
 
     /**
+     * Waits one cycle of START, PURCHASE, PRODUCTION, SALE, EXPORT
+     */
+    async function waitOneCorpCycle() {
+        const getState = () => ns.corporation.getCorporation().state;
+        let origState = getState();
+
+        while (getState() === origState) {
+            await ns.sleep(25);
+        }
+
+        while (getState() !== origState) {
+            await ns.sleep(25);
+        }
+    }
+
+    /**
+     * Gets the name of the lowest valued product in the specified division
+     * 
+     * @param {string} div divison name
+     * @returns lowest valued product
+     */
+    async function getWorstProd(div) {
+        let products = ns.corporation.getDivision(div).products;
+        let lowestVal = Infinity;
+        let lowestProd;
+        for (let prod of products) {
+            ns.corporation.limitProductProduction(div, 'Sector-12', prod, 0);
+            await waitOneCorpCycle();
+            ns.corporation.limitProductProduction(div, 'Sector-12', prod, -1);
+            latestDif = ns.corporation.getDivision(div).lastCycleRevenue - ns.corporation.getDivision(div).thisCycleRevenue;
+            if (latestDif < lowestVal) {
+                lowestVal = latestDif;
+                lowestProd = prod;
+            }
+        }
+        return lowestProd;
+    }
+
+    /**
      * Initial Setup
      * 
      * Pick a name and choose to Expand right out of the gate… you don’t have anything yet,
      * so expansion is how you make your first Agriculture division!
      */
 
-    if (
-        (ns.getPlayer().bitNodeN == 3 || ns.getPlayer().money > 150e9) &&
-        !ns.getPlayer().hasCorporation
-    ) {
-        ns.corporation.createCorporation(CORP_NAME, ns.getPlayer().bitNodeN != 3);
+    if (!ns.getPlayer().hasCorporation) {
+        if (ns.getPlayer().bitNodeN === 3) {
+            ns.corporation.createCorporation(CORP_NAME, false);
+        } else {
+            await waitForMoney(1e9, 'createCorporation');
+            ns.corporation.createCorporation(CORP_NAME);
+        }
     }
+
+    assignHashSpend();
 
     if (funds() >= ns.corporation.getExpandIndustryCost(DIVS.agro.industry) && !divExists(DIVS.agro.name)) {
         ns.corporation.expandIndustry(DIVS.agro.industry, DIVS.agro.name);
@@ -876,6 +921,7 @@ export async function main(ns) {
      * to turn on Market-TA.II (to the right, inside MARKET-TA).
      */
 
+    // main loop
     while (true) {
         if (funds() >= ns.corporation.getUpgradeLevelCost('Wilson Analytics')) {
             ns.corporation.levelUpgrade('Wilson Analytics');
@@ -903,7 +949,7 @@ export async function main(ns) {
             if (divExists(divName)) {
                 await expandToAllCities(divName);
                 await buyWarehouseAllCities(divName);
-                await upgrWarehouseAllCities(divName, 20);
+                await upgrWarehouseAllCities(divName, 20); // should give 4400 storage
                 enableSmartSupplyAllCities(divName);
                 attemptBuyResearch(divName);
                 sellDivMatsAndProducts(divObject);
@@ -919,14 +965,32 @@ export async function main(ns) {
                     if (funds() >= ns.corporation.getOfficeSizeUpgradeCost(divName, 'Aevum', 15)) {
                         ns.corporation.upgradeOfficeSize(divName, 'Aevum', 15);
                         hireEmployeesAllCities(divName);
-                        await assignJobs(divName, ['Aevum'], (ns.corporation.getOffice(divName, 'Aevum').size / 5));
+                    }
+                    for (let city of CITIES) {
+                        await assignJobs(divName, [city], (ns.corporation.getOffice(divName, city,).size / 5));
                     }
                 } else {
                     await assignJobs(divName, CITIES, 12);
                 }
                 // hire an advert, if we can
-                if (funds() >= ns.corporation.getHireAdVertCost(divName)) {
-                    ns.corporation.hireAdVert(divName);
+                if (
+                    funds() >= ns.corporation.getHireAdVertCost(divName)
+                    && ns.corporation.getDivision(divName).popularity < 1.7e308 // supposedly the hard limit for popularity
+                ) {
+                    if (divObject.makesProducts) {
+                        ns.corporation.hireAdVert(divName);
+                    } else if (ns.corporation.getHireAdVertCount(divName) < 100) {
+                        ns.corporation.hireAdVert(divName);
+                    }
+
+                }
+                // go public if profit greater than 1t/s, set dividends to 10%
+                if (
+                    corpProfit() > 1e12
+                    && !ns.corporation.getCorporation().public
+                ) {
+                    ns.corporation.goPublic(1e6);
+                    ns.corporation.issueDividends(0.1);
                 }
             }
         }

@@ -407,11 +407,11 @@ export async function main(ns) {
             }
 
             // attend univ for hacking, only up to 250
-            let firstUniCheck = [];
-            firstUniCheck.push(getSync(sleeve) >= 100);
-            firstUniCheck.push(ns.gang.inGang());
-            firstUniCheck.push(ns.getPlayer().hacking < 250);
-            if (firstUniCheck.every(x => x)) {
+            let uniCheck = [];
+            uniCheck.push(getSync(sleeve) >= 100);
+            uniCheck.push(ns.gang.inGang());
+            uniCheck.push(ns.getPlayer().hacking < 250);
+            if (uniCheck.every(x => x)) {
                 assignUniv(sleeve);
             }
 
@@ -454,12 +454,14 @@ export async function main(ns) {
             }
 
             // bladeburner actions, just infiltrate synthoids
-            let bbCheck = [];
-            bbCheck.push(allDonationsUnlocked());
-            bbCheck.push(shouldInfilSynth());
-            bbCheck.push(ns.bladeburner.getRank() < 400e3);
-            if (bbCheck.every(x => x)) {
-                assignInfilSynth(sleeve);
+            if (ns.getPlayer().inBladeburner) {
+                let bbCheck = [];
+                bbCheck.push(allDonationsUnlocked());
+                bbCheck.push(shouldInfilSynth());
+                bbCheck.push(ns.bladeburner.getRank() < 400e3);
+                if (bbCheck.every(x => x)) {
+                    assignInfilSynth(sleeve);
+                }
             }
 
             // buy augs

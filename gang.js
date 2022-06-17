@@ -48,18 +48,26 @@ export async function main(ns) {
      * territory, turn it off
      */
     function toggleWar() {
-        if (!ns.gang.getGangInformation().territoryWarfareEngaged && ns.gang.getGangInformation().territory < 1) {
-            let otherGangNames = Object.getOwnPropertyNames(ns.gang.getOtherGangInformation());
-            let winChances = otherGangNames.map(ns.gang.getChanceToWinClash);
-            // remove our own gang
-            winChances.shift();
+        let myGang = ns.gang.getGangInformation().faction;
+        
+        if (
+            !ns.gang.getGangInformation().territoryWarfareEngaged
+            && ns.gang.getGangInformation().territory < 1
+        ) {
+            let allGangs = Object.getOwnPropertyNames(ns.gang.getOtherGangInformation());
+            // remove the gang we're in
+            let otherGangs = allGangs.filter(x => x !== myGang);
+            let winChances = otherGangs.map(ns.gang.getChanceToWinClash);
             // if all win chances are above 60%, turn on war
             if (winChances.every(x => x > 0.6)) {
                 ns.gang.setTerritoryWarfare(true);
             }
         }
 
-        if (ns.gang.getGangInformation().territoryWarfareEngaged && ns.gang.getGangInformation().territory >= 1) {
+        if (
+            ns.gang.getGangInformation().territoryWarfareEngaged
+            && ns.gang.getGangInformation().territory >= 1
+        ) {
             ns.gang.setTerritoryWarfare(false);
         }
     }

@@ -294,7 +294,7 @@ export async function main(ns) {
             let currentName = factions[i];
             if (factionHasAugs(currentName)) {
                 if (ns.getPlayer().numPeopleKilled < (current.peopleKilled ?? 0)) {
-                    murder(current.peopleKilled);
+                    await murder(current.peopleKilled);
                 }
 
                 if (
@@ -358,7 +358,7 @@ export async function main(ns) {
      * 
      * @param {number} target bodycount desired
      */
-    function murder(target) {
+    async function murder(target) {
         if (
             ns.getPlayer().numPeopleKilled < target &&
             // !ns.getPlayer().factions.includes('Speakers for the Dead') &&
@@ -372,6 +372,10 @@ export async function main(ns) {
                 ns.scriptKill('bladeburner.js', 'home');
             }
             ns.run('crime.js', 1, target);
+        }
+
+        while (ns.getPlayer().numPeopleKilled < target) {
+            await ns.sleep(25);
         }
 
         // restart bladeburner, if needed
@@ -388,7 +392,8 @@ export async function main(ns) {
     // main loop
     while (true) {
         // try and buy all the darkweb programs
-        if (ns.singularity.purchaseTor()) {
+        if (!ns.getPlayer().tor) {
+            ns.singularity.purchaseTor();
             let programsList = ns.singularity.getDarkwebPrograms();
             programsList.forEach(ns.singularity.purchaseProgram);
         }

@@ -127,20 +127,27 @@ export async function main(ns) {
 
     /**
      * Unique Paths in a Grid II
-     * You are attempting to solve a Coding Contract. You have 10 tries remaining, after which the contract will self-destruct.
+     * You are attempting to solve a Coding Contract. You have 10 tries remaining, after which the 
+     * contract will self-destruct.
      * 
      * 
      * You are located in the top-left corner of the following grid:
      * 
-     * <data>
+     * 0,0,0,1,0,0,1,0,0,0,1,
+     * 0,0,0,0,0,0,0,0,0,0,0,
+     * 0,1,0,0,0,0,0,0,0,0,0,
+     * 0,0,0,0,0,0,0,0,0,0,0,
+     * 0,0,0,0,0,0,0,0,0,1,0,
+     * 0,0,0,0,0,0,0,0,0,0,0,
+     * 0,0,0,0,0,0,1,0,0,0,0,
      * 
-     * You are trying reach the bottom-right corner of the grid, but you can only move down or right on each step. 
-     * Furthermore, there are obstacles on the grid that you cannot move onto. These obstacles are denoted by '1', 
-     * while empty spaces are denoted by 0.
+     * You are trying reach the bottom-right corner of the grid, but you can only move down or right 
+     * on each step. Furthermore, there are obstacles on the grid that you cannot move onto. These 
+     * obstacles are denoted by '1', while empty spaces are denoted by 0.
      * 
      * Determine how many unique paths there are from start to finish.
      * 
-     * NOTE: The data returned for this contract is an 2D array of numbers representing the grid.
+     * NOTE: The data returned for this contract is a 2D array of numbers representing the grid.
      * 
      * @param {number[][]} data
      */
@@ -252,26 +259,24 @@ export async function main(ns) {
     function algStock4(data) {
 
     }
-    
+
     /**
      * Generate IP Addresses
      * You are attempting to solve a Coding Contract. You have 10 tries remaining, after which the contract will self-destruct.
      * 
      * 
-     * Given the following string containing only digits, return an array with all possible valid IP address combinations that 
-     * can be created from the string:
+     * Given the following string containing only digits, return an array with all possible valid IP address combinations that can be created from the string:
      * 
-     * <data>
+     * 3618238124
      * 
-     * Note that an octet cannot begin with a '0' unless the number itself is actually 0. For example, '192.168.010.1' is 
-     * not a valid IP.
+     * Note that an octet cannot begin with a '0' unless the number itself is actually 0. For example, '192.168.010.1' is not a valid IP.
      * 
      * Examples:
      * 
      * 25525511135 -> [255.255.11.135, 255.255.111.35]
-     * 1938718066 -> [193.87.180.66]
+     * 1938718066 -> [193.87.180.66] 
      * 
-     * @param {string} data 
+     * @param {string} data
      */
     function generateIP(data) {
 
@@ -291,10 +296,12 @@ export async function main(ns) {
 
     /**
      * Total Ways to Sum II
-     * You are attempting to solve a Coding Contract. You have 10 tries remaining, after which the contract will self-destruct.
+     * You are attempting to solve a Coding Contract. You have 10 tries remaining, after which the 
+     * contract will self-destruct.
      * 
      * 
-     * How many different distinct ways can the number 126 be written as a sum of integers contained in the set:
+     * How many different distinct ways can the number 126 be written as a sum of integers contained 
+     * in the set:
      * 
      * [5,6,7,8,9,10,11,12,14]?
      * 
@@ -303,7 +310,7 @@ export async function main(ns) {
      * @param {*} data 
      */
     function waysSum2(data) {
-        
+
     }
 
     /**
@@ -343,7 +350,6 @@ export async function main(ns) {
      * You are attempting to solve a Coding Contract. You have 10 tries remaining, after which the 
      * contract will self-destruct.
      * 
-     * 
      * You are given the following encoded binary String:
      * '1111011111010001100111010111100001000011010100000010'
      * Treat it as a Hammingcode with 1 'possible' error on an random Index.
@@ -356,7 +362,72 @@ export async function main(ns) {
      * 
      * @param {string} data 
      */
-    function hammingCodes(data) {
+    function hammingBinToInt(data) {
+
+    }
+
+    /**
+     * HammingCodes: Integer to Encoded Binary
+     * You are attempting to solve a Coding Contract. You have 10 tries remaining, after which the contract 
+     * will self-destruct.
+     * 
+     * You are given the following decimal Value:
+     * 5093891784
+     * Convert it into a binary string and encode it as a 'Hamming-Code'. eg:
+     * Value 8 will result into binary '1000', which will be encoded with the pattern 'pppdpddd', where p 
+     * is a paritybit and d a databit,
+     * or '10101' (Value 21) will result into (pppdpdddpd) '1001101011'.
+     * 
+     * NOTE: You need an parity Bit on Index 0 as an 'overall'-paritybit.
+     * NOTE 2: You should watch the HammingCode-video from 3Blue1Brown, which explains the 'rule' of encoding, 
+     * including the first Index parity-bit mentioned on the first note.
+     * 
+     * Now the only one rule for this encoding:
+     * It's not allowed to add additional leading '0's to the binary value
+     * That means, the binary value has to be encoded as it is
+     */
+    function hammingIntToBin(data) {
+
+    }
+
+    /**
+     * Spiralize Matrix
+     * You are attempting to solve a Coding Contract. You have 10 tries remaining, after which the 
+     * contract will self-destruct.
+     * 
+     * 
+     * Given the following array of arrays of numbers representing a 2D matrix, return the elements 
+     * of the matrix as an array in spiral order:
+     * 
+     *     [
+     *         [29,30,29,37,47,26,19,15, 8,41,37, 8,22,23,20]
+     *         [11,18,46,23,28, 5,33,48,31,11,39,29,46,36,12]
+     *         [19,47,13,41,39,15,32, 4,13,41,33,41,32, 2, 2]
+     *     ]
+     * 
+     * Here is an example of what spiral order should be:
+     * 
+     *     [
+     *         [1, 2, 3]
+     *         [4, 5, 6]
+     *         [7, 8, 9]
+     *     ]
+     * 
+     * Answer: [1, 2, 3, 6, 9, 8 ,7, 4, 5]
+     * 
+     * Note that the matrix will not always be square:
+     * 
+     *     [
+     *         [1,  2,  3,  4]
+     *         [5,  6,  7,  8]
+     *         [9, 10, 11, 12]
+     *     ]
+     * 
+     * Answer: [1, 2, 3, 4, 8, 12, 11, 10, 9, 5, 6, 7]
+     * 
+     * 
+     */
+    function spiralMatrix(data) {
 
     }
 }
