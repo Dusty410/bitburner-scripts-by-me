@@ -18,6 +18,30 @@ export async function main(ns) {
     Fishing: 0.5 energy => 1 food
     Mining: 0.8 energy => 1 metal
     Utilities: 0.1 hardware + 0.1 metal => 1 water
+
+    ==Ad values from the Discord server==
+    Using Awareness: 1.7976931348623157e+308 and Popularity: 1.7976931348623157e+308 (both are max-value)
+    Max Advertising Multipliers for:
+    Agriculture: x914788419353586565120.000
+    Chemical: x4.811839707320989e+36
+    Computer: x1.2179032708051464e+89
+    Energy: x8.368378521834333e+41
+    Fishing: x8.368378521834333e+41
+    Food: x1.01918755730774e+131
+    Healthcare: x4.401815240042955e+57
+    Mining: x2.7668205146957528e+31
+    Pharmaceutical: x7.00297590846982e+83
+    Real Estate: x1.01918755730774e+131
+    Robotics: x2.118082935632901e+94
+    Software: x7.00297590846982e+83
+    Tobacco: x6.406241262080406e+104
+    Utilities: x8.368378521834333e+41
+
+    Actual Peak multiplier is higher; when Popularity is e308, but Awareness is less, you have a Ratio 
+    Multiplier that improves this.  But it's easier to just spam Adverts...
+
+    So, highest values are Food and Real Estate, at 1.02e131.
+    Worst is Agriculture, at 9.1e20
     */
 
     ns.disableLog('sleep');
@@ -176,10 +200,28 @@ export async function main(ns) {
             name: 'uPgrade: Capacity.II',
             prereq: 'uPgrade: Capacity.I'
         }
-    ]
+    ];
 
-    const funds = () => ns.corporation.getCorporation().funds;
-    const corpProfit = () => ns.corporation.getCorporation().revenue - ns.corporation.getCorporation().expenses;
+    // const funds = () => ns.corporation.getCorporation().funds;
+    // const corpProfit = () => ns.corporation.getCorporation().revenue - ns.corporation.getCorporation().expenses;
+
+    /**
+     * Get current corp funds
+     * 
+     * @returns current corp funds
+     */
+    function funds() {
+        return ns.corporation.getCorporation().funds;
+    }
+
+    /**
+     * Gets current corp profit
+     * 
+     * @returns current corp profit
+     */
+    function corpProfit() {
+        return ns.corporation.getCorporation().revenue - ns.corporation.getCorporation().expenses;
+    }
 
     /**
      * Search if a division with the specified name exists

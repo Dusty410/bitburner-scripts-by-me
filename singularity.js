@@ -394,7 +394,8 @@ export async function main(ns) {
         // try and buy all the darkweb programs
         if (!ns.getPlayer().tor) {
             ns.singularity.purchaseTor();
-        } else {
+        }
+        if (ns.getPlayer().tor) {
             ns.singularity.getDarkwebPrograms().forEach(ns.singularity.purchaseProgram);
         }
         
@@ -426,9 +427,10 @@ export async function main(ns) {
 
         // graft nickofolas Congruity Implant
         if (
-            ns.grafting.getGraftableAugmentations().includes('nickofolas Congruity Implant') &&
-            ns.getPlayer().money >= ns.grafting.getAugmentationGraftPrice('nickofolas Congruity Implant') &&
-            ns.singularity.getOwnedAugmentations().includes('The Blade\'s Simulacrum')
+            ns.grafting.getGraftableAugmentations().includes('nickofolas Congruity Implant')
+            && ns.getPlayer().money >= ns.grafting.getAugmentationGraftPrice('nickofolas Congruity Implant')
+            && ns.singularity.getOwnedAugmentations().includes('The Blade\'s Simulacrum')
+            && !ns.singularity.isBusy()
         ) {
             if (ns.getPlayer().city != 'New Tokyo') {
                 ns.singularity.travelToCity('New Tokyo');

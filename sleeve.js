@@ -409,6 +409,7 @@ export async function main(ns) {
             // attend univ for hacking, only up to 250
             let uniCheck = [];
             uniCheck.push(getSync(sleeve) >= 100);
+            uniCheck.push(getShock(sleeve) <= 0);
             uniCheck.push(ns.gang.inGang());
             uniCheck.push(ns.getPlayer().hacking < 250);
             if (uniCheck.every(x => x)) {
@@ -418,6 +419,7 @@ export async function main(ns) {
             // work corp jobs to unlock factions
             let jobCheck = [];
             jobCheck.push(getSync(sleeve) >= 100);
+            jobCheck.push(getShock(sleeve) <= 0);
             jobCheck.push(ns.gang.inGang());
             jobCheck.push(ns.getPlayer().hacking >= 250);
             jobCheck.push(!allCorpJobsDone());
