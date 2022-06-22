@@ -24,12 +24,12 @@ export async function main(ns) {
         startup.push('bladeburner.js');
     }
 
-    // if home RAM is greater than 1 TiB, start corp script
-    if (ns.getServerMaxRam('home') > 2 ** 10) {
+    // start corp script if we have the RAM
+    if (ns.getServerMaxRam('home') > ns.getScriptRam('corp.js', 'home')) {
         startup.push('corp.js');
     }
 
-    let RAMNeeded = startup.map(x => ns.getScriptRam(x)).reduce((a, b) => a + b) + ns.getScriptRam('startup.js');
+    let RAMNeeded = startup.reduce((a, b) => a + ns.getScriptRam(b)) + ns.getScriptRam('startup.js');
     ns.tprint('RAM needed for startup scripts: ' + RAMNeeded);
     ns.tprint('Total RAM on home server: ' + ns.getServerMaxRam('home'));
     startup.forEach(x => ns.run(x));

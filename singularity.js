@@ -191,41 +191,25 @@ export async function main(ns) {
     }
 
     /**
-     * Check if we can join the Bladeburner div
-     * 
-     * @returns True if we can join Bladeburner div
-     */
-    function canJoinBladeburner() {
-        let statsEnough = (
-            ns.getPlayer().strength >= 100 &&
-            ns.getPlayer().defense >= 100 &&
-            ns.getPlayer().dexterity >= 100 &&
-            ns.getPlayer().agility >= 100
-        );
-        return statsEnough;
-    }
-
-    /**
      * Apply to all megacorporation jobs that we can, in each city, then return to original city
      */
     function applyToJobs() {
         let origCity = ns.getPlayer().city;
-        Object.getOwnPropertyNames(CORPS).forEach(
-            name => {
-                let corpsWhereEmployed = Object.getOwnPropertyNames(ns.getPlayer().jobs);
-                if (
-                    ns.getPlayer().hacking >= CORPS[name].hack
-                    && !corpsWhereEmployed.includes(name)
-                    && !ns.getPlayer().factions.includes(name)
-                    && !ns.singularity.checkFactionInvitations().includes(name)
-                ) {
-                    if (ns.getPlayer().city != CORPS[name].loc) {
-                        ns.singularity.travelToCity(CORPS[name].loc);
-                    }
-                    ns.singularity.applyToCompany(name, CORPS[name].targetPos);
+        for (let name of Object.getOwnPropertyNames(CORPS)) {
+            let corpsWhereEmployed = Object.getOwnPropertyNames(ns.getPlayer().jobs);
+            if (
+                ns.getPlayer().hacking >= CORPS[name].hack
+                && !corpsWhereEmployed.includes(name)
+                && !ns.getPlayer().factions.includes(name)
+                && !ns.singularity.checkFactionInvitations().includes(name)
+            ) {
+                if (ns.getPlayer().city != CORPS[name].loc) {
+                    ns.singularity.travelToCity(CORPS[name].loc);
                 }
+                ns.singularity.applyToCompany(name, CORPS[name].targetPos);
             }
-        )
+        }
+
         if (ns.getPlayer().city != origCity) {
             ns.singularity.travelToCity(origCity);
         }
@@ -240,7 +224,7 @@ export async function main(ns) {
     function factionHasAugs(faction) {
         let factionAugs = ns.singularity.getAugmentationsFromFaction(faction);
         let playerAugs = ns.singularity.getOwnedAugmentations(true);
-        return !factionAugs.map(aug => playerAugs.includes(aug)).every(x => x);
+        return !factionAugs.every(aug => playerAugs.includes(aug));
     }
 
     /**
@@ -250,10 +234,10 @@ export async function main(ns) {
      * @returns true if all combat stats are greater than target
      */
     function allCombatGreaterThan(target) {
-        return ns.getPlayer().strength >= target &&
-            ns.getPlayer().defense >= target &&
-            ns.getPlayer().dexterity >= target &&
-            ns.getPlayer().agility >= target;
+        return ns.getPlayer().strength >= target
+            && ns.getPlayer().defense >= target
+            && ns.getPlayer().dexterity >= target
+            && ns.getPlayer().agility >= target;
     }
 
     /**
@@ -298,13 +282,13 @@ export async function main(ns) {
                 }
 
                 if (
-                    allCombatGreaterThan(current.combatReq ?? 0) &&
-                    ns.getPlayer().money >= ((current.money ?? 0) + 200e3) &&
-                    ns.getPlayer().hacking >= (current.hack ?? 0) &&
-                    ns.heart.break() <= (current.karma ?? 0) &&
-                    !ns.getPlayer().factions.includes(currentName) &&
-                    !ns.singularity.checkFactionInvitations().includes(currentName) &&
-                    ns.getPlayer().numPeopleKilled >= (current.peopleKilled ?? 0)
+                    allCombatGreaterThan(current.combatReq ?? 0)
+                    && ns.getPlayer().money >= ((current.money ?? 0) + 200e3)
+                    && ns.getPlayer().hacking >= (current.hack ?? 0)
+                    && ns.heart.break() <= (current.karma ?? 0)
+                    && !ns.getPlayer().factions.includes(currentName)
+                    && !ns.singularity.checkFactionInvitations().includes(currentName)
+                    && ns.getPlayer().numPeopleKilled >= (current.peopleKilled ?? 0)
                 ) {
                     while (ns.getPlayer().city != current.loc[0]) {
                         ns.singularity.travelToCity(current.loc[0]);
@@ -326,10 +310,10 @@ export async function main(ns) {
         let job = 'software';
         let position = 'Chief Technology Officer';
         while (
-            ns.getPlayer().charisma >= 750 &&
-            ns.getPlayer().hacking >= 1000 &&
-            ns.singularity.getCompanyRep(company) >= 3.2e6 &&
-            (ns.getPlayer().jobs[company] ?? '') != position
+            ns.getPlayer().charisma >= 750
+            && ns.getPlayer().hacking >= 1000
+            && ns.singularity.getCompanyRep(company) >= 3.2e6
+            && (ns.getPlayer().jobs[company] ?? '') != position
         ) {
             ns.singularity.applyToCompany(company, job);
         }
@@ -360,10 +344,8 @@ export async function main(ns) {
      */
     async function murder(target) {
         if (
-            ns.getPlayer().numPeopleKilled < target &&
-            // !ns.getPlayer().factions.includes('Speakers for the Dead') &&
-            // !ns.singularity.checkFactionInvitations().includes('Speakers for the Dead') &&
-            !ns.scriptRunning('crime.js', 'home')
+            ns.getPlayer().numPeopleKilled < target
+            && !ns.scriptRunning('crime.js', 'home')
         ) {
             if (
                 ns.scriptRunning('bladeburner.js', 'home') &&
@@ -380,17 +362,27 @@ export async function main(ns) {
 
         // restart bladeburner, if needed
         if ((
-            ns.getPlayer().numPeopleKilled >= target &&
-            !ns.scriptRunning('bladeburner.js', 'home') &&
-            !ns.scriptRunning('crime.js', 'home')
+            ns.getPlayer().numPeopleKilled >= target
+            && !ns.scriptRunning('bladeburner.js', 'home')
+            && !ns.scriptRunning('crime.js', 'home')
         ) || ns.singularity.getOwnedAugmentations().includes('The Blade\'s Simulacrum')
         ) {
             ns.run('bladeburner.js');
         }
     }
 
+    function startScripts() {
+        let totalRAM = ns.getScriptRam('singularity.js', 'home');
+        
+        if (!ns.scriptRunning('HNSpend.js', 'home')) {
+            ns.run('HNSpend.js');
+        }
+    }
+
     // main loop
     while (true) {
+        await ns.sleep(1 * 1e3);
+
         // try and buy all the darkweb programs
         if (!ns.getPlayer().tor) {
             ns.singularity.purchaseTor();
@@ -398,7 +390,7 @@ export async function main(ns) {
         if (ns.getPlayer().tor) {
             ns.singularity.getDarkwebPrograms().forEach(ns.singularity.purchaseProgram);
         }
-        
+
         // check if we can afford a home memory or core upgrade
         if (ns.getPlayer().money > ns.singularity.getUpgradeHomeRamCost()) {
             ns.singularity.upgradeHomeRam();
@@ -417,7 +409,10 @@ export async function main(ns) {
         joinFactions();
 
         // join bladeburner if possible
-        if (canJoinBladeburner() && !ns.getPlayer().inBladeburner) {
+        if (
+            allCombatGreaterThan(100)
+            && !ns.getPlayer().inBladeburner
+        ) {
             ns.bladeburner.joinBladeburnerDivision();
         }
 
@@ -437,7 +432,5 @@ export async function main(ns) {
             }
             ns.grafting.graftAugmentation('nickofolas Congruity Implant', false)
         }
-
-        await ns.sleep(1 * 1e3);
     }
 }
