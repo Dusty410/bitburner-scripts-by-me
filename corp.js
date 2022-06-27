@@ -804,7 +804,7 @@ export async function main(ns) {
             if (divExists(divName)) {
                 await expandToAllCities(divName);
                 await buyWarehouseAllCities(divName);
-                await upgrWarehouseAllCities(divName, 20); // should give 4400 storage
+                // await upgrWarehouseAllCities(divName, 1); // should give 200 storage
                 enableSmartSupplyAllCities(divName);
                 attemptBuyResearch(divName);
                 sellDivMatsAndProducts(divObject);

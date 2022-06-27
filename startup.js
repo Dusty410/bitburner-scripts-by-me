@@ -29,7 +29,7 @@ export async function main(ns) {
         startup.push('corp.js');
     }
 
-    let RAMNeeded = startup.reduce((a, b) => a + ns.getScriptRam(b)) + ns.getScriptRam('startup.js');
+    let RAMNeeded = startup.reduce((a, b) => a + ns.getScriptRam(b, 'home'), 0) + ns.getScriptRam('startup.js', 'home');
     ns.tprint('RAM needed for startup scripts: ' + RAMNeeded);
     ns.tprint('Total RAM on home server: ' + ns.getServerMaxRam('home'));
     startup.forEach(x => ns.run(x));
